@@ -2,12 +2,13 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgres"
   url      = env("DATABASE_URL")
 }
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearch"]
 }
 
 // --------------------------------------
@@ -63,3 +64,27 @@ model Token {
 // enum TokenType {
 //   RESET_PASSWORD
 // }
+
+model Pomodoro {
+  id        Int       @id @default(autoincrement())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  stoppedAt DateTime?
+  tasks     Task[]
+}
+
+model Task {
+  id          Int        @id @default(autoincrement())
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  description String
+  detail      String?
+  pomodoros   Pomodoro[]
+}
+
+model BreakTime {
+  id        Int       @id @default(autoincrement())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  stoppedAt DateTime?
+}
