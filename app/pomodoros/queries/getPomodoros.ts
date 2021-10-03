@@ -6,8 +6,12 @@ interface GetPomodorosInput
 
 export default resolver.pipe(
   resolver.authorize(),
-  async ({ where, orderBy, skip = 0, take = 100 }: GetPomodorosInput) => {
-    // TODO: in multi-tenant app, you must add validation to ensure correct tenant
+  async ({ where, orderBy, skip = 0, take = 100 }: GetPomodorosInput, ctx) => {
+    const { orgId, membershipId } = ctx.session
+
+    if (!orgId) throw new Error("Missing session.orgId")
+    if (!membershipId) throw new Error("Missing session.membershipId")
+
     const {
       items: pomodoros,
       hasMore,
@@ -18,7 +22,12 @@ export default resolver.pipe(
       take,
       count: () => db.pomodoro.count({ where }),
       query: (paginateArgs) =>
-        db.pomodoro.findMany({ ...paginateArgs, where, orderBy, include: { tasks: true } }),
+        db.pomodoro.findMany({
+          ...paginateArgs,
+          where: { ...where, organizationId: orgId, membershipId },
+          orderBy,
+          include: { tasks: true },
+        }),
     })
 
     return {

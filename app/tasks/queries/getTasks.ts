@@ -6,8 +6,11 @@ interface GetTasksInput
 
 export default resolver.pipe(
   resolver.authorize(),
-  async ({ where, orderBy, skip = 0, take = 100 }: GetTasksInput) => {
-    // TODO: in multi-tenant app, you must add validation to ensure correct tenant
+  async ({ where, orderBy, skip = 0, take = 100 }: GetTasksInput, ctx) => {
+    const { orgId } = ctx.session
+
+    if (!orgId) throw new Error("Missing session.orgId")
+
     const {
       items: tasks,
       hasMore,
@@ -17,7 +20,8 @@ export default resolver.pipe(
       skip,
       take,
       count: () => db.task.count({ where }),
-      query: (paginateArgs) => db.task.findMany({ ...paginateArgs, where, orderBy }),
+      query: (paginateArgs) =>
+        db.task.findMany({ ...paginateArgs, where: { ...where, organizationId: orgId }, orderBy }),
     })
 
     return {

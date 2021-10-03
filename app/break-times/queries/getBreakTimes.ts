@@ -6,8 +6,12 @@ interface GetBreakTimesInput
 
 export default resolver.pipe(
   resolver.authorize(),
-  async ({ where, orderBy, skip = 0, take = 100 }: GetBreakTimesInput) => {
-    // TODO: in multi-tenant app, you must add validation to ensure correct tenant
+  async ({ where, orderBy, skip = 0, take = 100 }: GetBreakTimesInput, ctx) => {
+    const { orgId, membershipId } = ctx.session
+
+    if (!orgId) throw new Error("Missing session.orgId")
+    if (!membershipId) throw new Error("Missing session.membershipId")
+
     const {
       items: breakTimes,
       hasMore,
@@ -17,7 +21,12 @@ export default resolver.pipe(
       skip,
       take,
       count: () => db.breakTime.count({ where }),
-      query: (paginateArgs) => db.breakTime.findMany({ ...paginateArgs, where, orderBy }),
+      query: (paginateArgs) =>
+        db.breakTime.findMany({
+          ...paginateArgs,
+          where: { ...where, organizationId: orgId, membershipId },
+          orderBy,
+        }),
     })
 
     return {

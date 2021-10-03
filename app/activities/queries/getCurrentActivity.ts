@@ -51,65 +51,79 @@ export function getNextActivityLength(set) {
 
 const GetCurrentActivity = z.any()
 
-export default resolver.pipe(resolver.zod(GetCurrentActivity), resolver.authorize(), async () => {
-  // TODO: in multi-tenant app, you must add validation to ensure correct tenant
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
+export default resolver.pipe(
+  resolver.zod(GetCurrentActivity),
+  resolver.authorize(),
+  async (_, ctx) => {
+    const { orgId, membershipId } = ctx.session
 
-  const todaysPomodoros = await db.pomodoro.findMany({
-    where: { createdAt: { gte: today } },
-    orderBy: { createdAt: "asc" },
-  })
+    if (!orgId) throw new Error("Missing session.orgId")
+    if (!membershipId) throw new Error("Missing session.membershipId")
 
-  const todaysBreaks = await db.breakTime.findMany({
-    where: { createdAt: { gte: today } },
-    orderBy: { createdAt: "asc" },
-  })
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
 
-  const interspersed: (Pomodoro | BreakTime)[] = []
+    const where = { createdAt: { gte: today }, organizationId: orgId, membershipId }
+    const orderBy = { createdAt: "asc" as const }
 
-  for (let i = 0; i < todaysPomodoros.length; i++) {
-    interspersed.push(todaysPomodoros[i]!)
-    if (todaysBreaks[i]) {
-      interspersed.push(todaysBreaks[i]!)
+    const [todaysPomodoros, todaysBreaks] = await Promise.all([
+      db.pomodoro.findMany({
+        where,
+        orderBy,
+      }),
+      db.breakTime.findMany({
+        where,
+        orderBy,
+      }),
+    ])
+
+    const interspersed: (Pomodoro | BreakTime)[] = []
+
+    for (let i = 0; i < todaysPomodoros.length; i++) {
+      interspersed.push(todaysPomodoros[i]!)
+      if (todaysBreaks[i]) {
+        interspersed.push(todaysBreaks[i]!)
+      }
     }
-  }
 
-  const setLength = 6
+    const setLength = 6
 
-  const sets: (Pomodoro | BreakTime)[][] = []
+    const sets: (Pomodoro | BreakTime)[][] = []
 
-  for (let i = 0; i < interspersed.length; i += setLength) {
-    sets.push(interspersed.slice(i, i + setLength))
-  }
+    for (let i = 0; i < interspersed.length; i += setLength) {
+      sets.push(interspersed.slice(i, i + setLength))
+    }
 
-  const currentSet = sets[sets.length - 1]
+    const currentSet = sets[sets.length - 1]
 
-  if (!currentSet) {
-    return null
-  } else {
-    const currentSetDurations = currentSet
-      .filter((activity) => !!activity.stoppedAt)
-      .map((activity) => (activity.stoppedAt!.getTime() - activity.createdAt.getTime()) / 1000 / 60)
-
-    const suggestedLength = getNextActivityLength(currentSetDurations).toFixed()
-
-    const latestActivity = currentSet[currentSet.length - 1]
-
-    if (latestActivity!.stoppedAt) {
+    if (!currentSet) {
       return null
-    } else if (currentSet.length % 2) {
-      return {
-        type: "pomodoro" as const,
-        activity: latestActivity as Pomodoro,
-        suggestedLength,
-      }
     } else {
-      return {
-        type: "break" as const,
-        activity: latestActivity as BreakTime,
-        suggestedLength,
+      const currentSetDurations = currentSet
+        .filter((activity) => !!activity.stoppedAt)
+        .map(
+          (activity) => (activity.stoppedAt!.getTime() - activity.createdAt.getTime()) / 1000 / 60
+        )
+
+      const suggestedLength = getNextActivityLength(currentSetDurations).toFixed()
+
+      const latestActivity = currentSet[currentSet.length - 1]
+
+      if (latestActivity!.stoppedAt) {
+        return null
+      } else if (currentSet.length % 2) {
+        return {
+          type: "pomodoro" as const,
+          activity: latestActivity as Pomodoro,
+          suggestedLength,
+        }
+      } else {
+        return {
+          type: "break" as const,
+          activity: latestActivity as BreakTime,
+          suggestedLength,
+        }
       }
     }
   }
-})
+)

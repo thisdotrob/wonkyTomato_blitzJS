@@ -4,12 +4,20 @@ import { z } from "zod"
 
 const GetCurrentPomodoro = z.any()
 
-export default resolver.pipe(resolver.zod(GetCurrentPomodoro), resolver.authorize(), async () => {
-  // TODO: in multi-tenant app, you must add validation to ensure correct tenant
-  const currentPomodoro = await db.pomodoro.findFirst({
-    where: { stoppedAt: null },
-    include: { tasks: true },
-  })
+export default resolver.pipe(
+  resolver.zod(GetCurrentPomodoro),
+  resolver.authorize(),
+  async (_, ctx) => {
+    const { orgId, membershipId } = ctx.session
 
-  return currentPomodoro
-})
+    if (!orgId) throw new Error("Missing session.orgId")
+    if (!membershipId) throw new Error("Missing session.membershipId")
+
+    const currentPomodoro = await db.pomodoro.findFirst({
+      where: { stoppedAt: null, organizationId: orgId, membershipId },
+      include: { tasks: true },
+    })
+
+    return currentPomodoro
+  }
+)

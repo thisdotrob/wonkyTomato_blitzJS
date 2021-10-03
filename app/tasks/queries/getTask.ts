@@ -7,9 +7,12 @@ const GetTask = z.object({
   id: z.number().optional().refine(Boolean, "Required"),
 })
 
-export default resolver.pipe(resolver.zod(GetTask), resolver.authorize(), async ({ id }) => {
-  // TODO: in multi-tenant app, you must add validation to ensure correct tenant
-  const task = await db.task.findFirst({ where: { id } })
+export default resolver.pipe(resolver.zod(GetTask), resolver.authorize(), async ({ id }, ctx) => {
+  const { orgId } = ctx.session
+
+  if (!orgId) throw new Error("Missing session.orgId")
+
+  const task = await db.task.findFirst({ where: { id, organizationId: orgId } })
 
   if (!task) throw new NotFoundError()
 
