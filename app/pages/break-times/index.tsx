@@ -22,12 +22,8 @@ export const BreakTimesList = () => {
       <ul>
         {breakTimes.map((breakTime) => (
           <li key={breakTime.id}>
-            <Link href={Routes.ShowBreakTimePage({ breakTimeId: breakTime.id })}>
-              <a>
-                {breakTime.createdAt.toLocaleString()}
-                {breakTime.stoppedAt ? ` - ${breakTime.stoppedAt.toLocaleTimeString()}` : null}
-              </a>
-            </Link>
+            {breakTime.createdAt.toLocaleString()}
+            {breakTime.stoppedAt ? ` - ${breakTime.stoppedAt.toLocaleTimeString()}` : null}
           </li>
         ))}
       </ul>

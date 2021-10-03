@@ -22,12 +22,8 @@ export const PomodorosList = () => {
       <ul>
         {pomodoros.map((pomodoro) => (
           <li key={pomodoro.id}>
-            <Link href={Routes.EditPomodoroPage({ pomodoroId: pomodoro.id })}>
-              <a>
-                {pomodoro.createdAt.toLocaleString()}
-                {pomodoro.stoppedAt ? ` - ${pomodoro.stoppedAt.toLocaleTimeString()}` : null}
-              </a>
-            </Link>
+            {pomodoro.createdAt.toLocaleString()}
+            {pomodoro.stoppedAt ? ` - ${pomodoro.stoppedAt.toLocaleTimeString()}` : null}
           </li>
         ))}
       </ul>
