@@ -25,28 +25,25 @@
     ]
   },
   "dependencies": {
-    "@prisma/client": "2.30.0",
-    "blitz": "0.38.6",
-    "final-form": "4.20.2",
-    "lodash.debounce": "4.0.8",
-    "react": "alpha",
+    "@prisma/client": "3.1.1",
+    "blitz": "0.40.0",
     "react-dom": "alpha",
-    "react-final-form": "6.5.3",
-    "zod": "3.7.1"
+    "react": "alpha",
+    "zod": "3.9.5",
+    "final-form": "4.20.4",
+    "react-final-form": "6.5.7"
   },
   "devDependencies": {
-    "@types/lodash.debounce": "4.0.6",
     "@types/preview-email": "2.0.1",
-    "@types/react": "17.0.16",
+    "@types/react": "17.0.27",
     "eslint": "7.32.0",
     "husky": "6.0.0",
     "lint-staged": "10.5.4",
-    "next": "npm:@blitzjs/next@11.0.1-0.38.6",
-    "prettier": "2.3.2",
     "prettier-plugin-prisma": "0.15.0",
+    "prettier": "2.4.1",
     "pretty-quick": "3.1.1",
-    "preview-email": "3.0.4",
-    "prisma": "2.30.0",
+    "preview-email": "3.0.5",
+    "prisma": "3.1.1",
     "typescript": "~4.3"
   },
   "private": true
