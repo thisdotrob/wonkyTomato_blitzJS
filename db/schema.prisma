@@ -12,18 +12,48 @@ generator client {
 }
 
 // --------------------------------------
+model Organization {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  membership Membership[]
+}
+
+model Membership {
+  id             Int            @id @default(autoincrement())
+  role           MembershipRole
+  organization   Organization   @relation(fields: [organizationId], references: [id])
+  organizationId Int
+
+  user   User? @relation(fields: [userId], references: [id])
+  userId Int?
+
+  // When the user joins, we will clear out the name and email and set the user.
+  invitedName  String?
+  invitedEmail String?
+
+  @@unique([organizationId, invitedEmail])
+}
+
+enum MembershipRole {
+  OWNER
+  ADMIN
+  USER
+}
 
 model User {
-  id             Int      @id @default(autoincrement())
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  name           String?
-  email          String   @unique
-  hashedPassword String?
-  role           String   @default("USER")
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  name      String?
+  email     String   @unique
 
-  tokens   Token[]
-  sessions Session[]
+  hashedPassword String?
+  role           String  @default("USER")
+
+  memberships Membership[]
+  tokens      Token[]
+  sessions    Session[]
 }
 
 model Session {
