@@ -4,9 +4,20 @@ import { z } from "zod"
 
 const CreatePomodoro = z.object({})
 
-export default resolver.pipe(resolver.zod(CreatePomodoro), resolver.authorize(), async (input) => {
-  // TODO: in multi-tenant app, you must add validation to ensure correct tenant
-  const pomodoro = await db.pomodoro.create({ data: input, include: { tasks: true } })
+export default resolver.pipe(
+  resolver.zod(CreatePomodoro),
+  resolver.authorize(),
+  async (input, ctx) => {
+    const { orgId, membershipId } = ctx.session
+    const pomodoro = await db.pomodoro.create({
+      data: {
+        ...input,
+        organization: { connect: { id: orgId } },
+        owner: { connect: { id: membershipId } },
+      },
+      include: { tasks: true },
+    })
 
-  return pomodoro
-})
+    return pomodoro
+  }
+)

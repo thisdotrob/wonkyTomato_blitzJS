@@ -32,6 +32,7 @@ export default resolver.pipe(resolver.zod(Login), async ({ email, password }, ct
 
   await ctx.session.$create({
     userId: user.id,
+    membershipId: membership.id,
     roles: [user.role as MembershipRole, membership.role],
     orgId: membership.organizationId,
   })

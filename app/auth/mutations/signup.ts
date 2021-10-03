@@ -30,6 +30,7 @@ export default resolver.pipe(
 
     await ctx.session.$create({
       userId: user.id,
+      membershipId: membership.id,
       roles: [user.role as MembershipRole, membership.role],
       orgId: membership.organizationId,
     })

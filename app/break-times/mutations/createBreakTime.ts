@@ -4,9 +4,19 @@ import { z } from "zod"
 
 const CreateBreakTime = z.object({})
 
-export default resolver.pipe(resolver.zod(CreateBreakTime), resolver.authorize(), async (input) => {
-  // TODO: in multi-tenant app, you must add validation to ensure correct tenant
-  const breakTime = await db.breakTime.create({ data: input })
+export default resolver.pipe(
+  resolver.zod(CreateBreakTime),
+  resolver.authorize(),
+  async (input, ctx) => {
+    const { orgId, membershipId } = ctx.session
+    const breakTime = await db.breakTime.create({
+      data: {
+        ...input,
+        organization: { connect: { id: orgId } },
+        owner: { connect: { id: membershipId } },
+      },
+    })
 
-  return breakTime
-})
+    return breakTime
+  }
+)

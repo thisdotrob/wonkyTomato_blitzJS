@@ -1,4 +1,4 @@
-import { resolver } from "blitz"
+import { AuthorizationError, NotFoundError, resolver } from "blitz"
 import db from "db"
 import { z } from "zod"
 
@@ -6,9 +6,24 @@ const StopBreakTime = z.object({
   id: z.number(),
 })
 
-export default resolver.pipe(resolver.zod(StopBreakTime), resolver.authorize(), async ({ id }) => {
-  // TODO: in multi-tenant app, you must add validation to ensure correct tenant
-  const breakTime = await db.breakTime.update({ where: { id }, data: { stoppedAt: new Date() } })
+export default resolver.pipe(
+  resolver.zod(StopBreakTime),
+  resolver.authorize(),
+  async ({ id }, ctx) => {
+    const { orgId, membershipId } = ctx.session
 
-  return breakTime
-})
+    if (!orgId) throw new Error("Missing session.orgId")
+    if (!membershipId) throw new Error("Missing session.membershipId")
+
+    let breakTime = await db.breakTime.findUnique({ where: { id } })
+
+    if (breakTime === null) throw new NotFoundError()
+
+    if (breakTime.organizationId !== orgId || breakTime.membershipId !== membershipId)
+      throw new AuthorizationError()
+
+    breakTime = await db.breakTime.update({ where: { id }, data: { stoppedAt: new Date() } })
+
+    return breakTime
+  }
+)

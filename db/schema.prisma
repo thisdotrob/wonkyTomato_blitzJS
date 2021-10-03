@@ -17,6 +17,9 @@ model Organization {
   name String
 
   membership Membership[]
+  Pomodoro   Pomodoro[]
+  Task       Task[]
+  BreakTime  BreakTime[]
 }
 
 model Membership {
@@ -32,6 +35,9 @@ model Membership {
   invitedName  String?
   invitedEmail String?
 
+  Pomodoro  Pomodoro[]
+  Task      Task[]
+  BreakTime BreakTime[]
   @@unique([organizationId, invitedEmail])
 }
 
@@ -96,25 +102,37 @@ model Token {
 // }
 
 model Pomodoro {
-  id        Int       @id @default(autoincrement())
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  stoppedAt DateTime?
-  tasks     Task[]
+  id             Int          @id @default(autoincrement())
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  stoppedAt      DateTime?
+  tasks          Task[]
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  owner          Membership   @relation(fields: [membershipId], references: [id])
+  organizationId Int
+  membershipId   Int
 }
 
 model Task {
-  id          Int        @id @default(autoincrement())
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  description String
-  detail      String?
-  pomodoros   Pomodoro[]
+  id             Int          @id @default(autoincrement())
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  description    String
+  detail         String?
+  pomodoros      Pomodoro[]
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  owner          Membership   @relation(fields: [membershipId], references: [id])
+  organizationId Int
+  membershipId   Int
 }
 
 model BreakTime {
-  id        Int       @id @default(autoincrement())
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  stoppedAt DateTime?
+  id             Int          @id @default(autoincrement())
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  stoppedAt      DateTime?
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  owner          Membership   @relation(fields: [membershipId], references: [id])
+  organizationId Int
+  membershipId   Int
 }

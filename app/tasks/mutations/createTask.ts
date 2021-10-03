@@ -7,9 +7,15 @@ const CreateTask = z.object({
   detail: z.string(),
 })
 
-export default resolver.pipe(resolver.zod(CreateTask), resolver.authorize(), async (input) => {
-  // TODO: in multi-tenant app, you must add validation to ensure correct tenant
-  const task = await db.task.create({ data: input })
+export default resolver.pipe(resolver.zod(CreateTask), resolver.authorize(), async (input, ctx) => {
+  const { orgId, membershipId } = ctx.session
+  const task = await db.task.create({
+    data: {
+      ...input,
+      organization: { connect: { id: orgId } },
+      owner: { connect: { id: membershipId } },
+    },
+  })
 
   return task
 })

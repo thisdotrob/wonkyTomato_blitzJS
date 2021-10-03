@@ -1,4 +1,4 @@
-import { resolver } from "blitz"
+import { AuthorizationError, NotFoundError, resolver } from "blitz"
 import db from "db"
 import { z } from "zod"
 
@@ -6,9 +6,24 @@ const StopPomodoro = z.object({
   id: z.number(),
 })
 
-export default resolver.pipe(resolver.zod(StopPomodoro), resolver.authorize(), async ({ id }) => {
-  // TODO: in multi-tenant app, you must add validation to ensure correct tenant
-  const pomodoro = await db.pomodoro.update({ where: { id }, data: { stoppedAt: new Date() } })
+export default resolver.pipe(
+  resolver.zod(StopPomodoro),
+  resolver.authorize(),
+  async ({ id }, ctx) => {
+    const { orgId, membershipId } = ctx.session
 
-  return pomodoro
-})
+    if (!orgId) throw new Error("Missing session.orgId")
+    if (!membershipId) throw new Error("Missing session.membershipId")
+
+    let pomodoro = await db.pomodoro.findUnique({ where: { id } })
+
+    if (pomodoro === null) throw new NotFoundError()
+
+    if (pomodoro.organizationId !== orgId || pomodoro.membershipId !== membershipId)
+      throw new AuthorizationError()
+
+    pomodoro = await db.pomodoro.update({ where: { id }, data: { stoppedAt: new Date() } })
+
+    return pomodoro
+  }
+)

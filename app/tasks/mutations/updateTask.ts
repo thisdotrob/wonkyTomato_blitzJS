@@ -1,4 +1,4 @@
-import { resolver } from "blitz"
+import { AuthorizationError, NotFoundError, resolver } from "blitz"
 import db from "db"
 import { z } from "zod"
 
@@ -11,9 +11,18 @@ const UpdateTask = z.object({
 export default resolver.pipe(
   resolver.zod(UpdateTask),
   resolver.authorize(),
-  async ({ id, ...data }) => {
-    // TODO: in multi-tenant app, you must add validation to ensure correct tenant
-    const task = await db.task.update({ where: { id }, data })
+  async ({ id, ...data }, ctx) => {
+    const { orgId } = ctx.session
+
+    if (!orgId) throw new Error("Missing session.orgId")
+
+    let task = await db.task.findUnique({ where: { id } })
+
+    if (task === null) throw new NotFoundError()
+
+    if (task.organizationId !== orgId) throw new AuthorizationError()
+
+    task = await db.task.update({ where: { id }, data })
 
     return task
   }
