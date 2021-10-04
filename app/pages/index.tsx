@@ -64,6 +64,8 @@ const CurrentActivityPanel = () => {
           <br />
           <span>Suggested length: {currentActivity.suggestedLength}</span>
           <br />
+          <span>Suggested end time: {currentActivity.suggestedEndTime.toLocaleTimeString()}</span>
+          <br />
           <button
             onClick={async () => {
               await Promise.all([
@@ -93,6 +95,8 @@ const CurrentActivityPanel = () => {
           </span>
           <br />
           <span>Suggested length: {currentActivity.suggestedLength}</span>
+          <br />
+          <span>Suggested end time: {currentActivity.suggestedEndTime.toLocaleTimeString()}</span>
           <br />
           <button
             onClick={async () => {

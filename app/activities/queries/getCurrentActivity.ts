@@ -105,9 +105,13 @@ export default resolver.pipe(
           (activity) => (activity.stoppedAt!.getTime() - activity.createdAt.getTime()) / 1000 / 60
         )
 
-      const suggestedLength = getNextActivityLength(currentSetDurations).toFixed()
+      const suggestedLength = getNextActivityLength(currentSetDurations)
 
       const latestActivity = currentSet[currentSet.length - 1]
+
+      const suggestedEndTime = new Date(
+        latestActivity!.createdAt.getTime() + suggestedLength * 60 * 1000
+      )
 
       if (latestActivity!.stoppedAt) {
         return null
@@ -115,13 +119,15 @@ export default resolver.pipe(
         return {
           type: "pomodoro" as const,
           activity: latestActivity as Pomodoro,
-          suggestedLength,
+          suggestedLength: suggestedLength.toFixed(),
+          suggestedEndTime: suggestedEndTime,
         }
       } else {
         return {
           type: "break" as const,
           activity: latestActivity as BreakTime,
-          suggestedLength,
+          suggestedLength: suggestedLength.toFixed(),
+          suggestedEndTime: suggestedEndTime,
         }
       }
     }
