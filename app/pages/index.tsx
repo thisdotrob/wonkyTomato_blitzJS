@@ -1,11 +1,14 @@
-import { Suspense } from "react"
+import { Suspense, useState } from "react"
 import { Link, BlitzPage, useMutation, useQuery, Routes } from "blitz"
 import Layout from "app/core/layouts/Layout"
 import { useCurrentUser } from "app/core/hooks/useCurrentUser"
 import createPomodoro from "app/pomodoros/mutations/createPomodoro"
 import stopPomodoro from "app/pomodoros/mutations/stopPomodoro"
+import getCurrentPomodoro from "app/pomodoros/queries/getCurrentPomodoro"
 import createBreakTime from "app/break-times/mutations/createBreakTime"
 import stopBreakTime from "app/break-times/mutations/stopBreakTime"
+import createTask from "app/tasks/mutations/createTask"
+import { TaskForm, FORM_ERROR } from "app/tasks/components/TaskForm"
 import getCurrentActivity from "app/activities/queries/getCurrentActivity"
 import logout from "app/auth/mutations/logout"
 
@@ -45,6 +48,38 @@ const UserInfo = () => {
       </>
     )
   }
+}
+
+const UpdatePomodoroTasksPanel = () => {
+  const [currentPomodoro, { remove }] = useQuery(getCurrentPomodoro, null)
+  const [createTaskMutation] = useMutation(createTask)
+  const [addingTask, setAddingTask] = useState(false)
+  return currentPomodoro ? (
+    <>
+      {currentPomodoro.tasks.map((t, i) => (
+        <li key={i}>{t.description}</li>
+      ))}
+      {addingTask ? (
+        <TaskForm
+          submitText="Create Task"
+          onSubmit={async (values) => {
+            try {
+              await createTaskMutation({ ...values, pomodoroId: currentPomodoro.id })
+              remove()
+              setAddingTask(false)
+            } catch (error) {
+              console.error(error)
+              return {
+                [FORM_ERROR]: error.toString(),
+              }
+            }
+          }}
+        />
+      ) : (
+        <button onClick={() => setAddingTask(true)}>Add task</button>
+      )}
+    </>
+  ) : null
 }
 
 const CurrentActivityPanel = () => {
@@ -97,6 +132,8 @@ const CurrentActivityPanel = () => {
           <span>Suggested length: {currentActivity.suggestedLength}</span>
           <br />
           <span>Suggested end time: {currentActivity.suggestedEndTime.toLocaleTimeString()}</span>
+          <br />
+          <UpdatePomodoroTasksPanel />
           <br />
           <button
             onClick={async () => {
