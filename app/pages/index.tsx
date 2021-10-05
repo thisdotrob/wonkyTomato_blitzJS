@@ -1,12 +1,18 @@
 import { Suspense, useEffect, useState } from "react"
 import { Link, BlitzPage, useMutation, Routes } from "blitz"
+import * as z from "zod"
 import Layout from "app/core/layouts/Layout"
+import { Form, FORM_ERROR } from "app/core/components/Form"
+import { FormTextInput } from "app/core/components/Forms/FormTextInput"
+import { FormTextarea } from "app/core/components/Forms/FormTextarea"
 import { useCurrentUser } from "app/core/hooks/useCurrentUser"
 import { useCurrentActivity } from "app/core/hooks/useCurrentActivity"
 import createPomodoro from "app/pomodoros/mutations/createPomodoro"
 import stopPomodoro from "app/pomodoros/mutations/stopPomodoro"
 import createBreakTime from "app/break-times/mutations/createBreakTime"
 import stopBreakTime from "app/break-times/mutations/stopBreakTime"
+import createTask from "app/tasks/mutations/createTask"
+import updateTask from "app/tasks/mutations/updateTask"
 import logout from "app/auth/mutations/logout"
 import {
   Button,
@@ -22,11 +28,19 @@ import {
   AccordionButton,
   AccordionIcon,
   AccordionPanel,
+  Text,
+  Editable,
+  EditablePreview,
+  EditableInput,
 } from "@chakra-ui/react"
 import { BreakTime, Pomodoro } from "db"
 
 const UpdatePomodoroTasksPanel = () => {
-  const { currentActivity } = useCurrentActivity()
+  const { currentActivity, refetch } = useCurrentActivity()
+  const [createTaskMutation] = useMutation(createTask)
+  const [updateTaskMutation] = useMutation(updateTask)
+
+  const [createNewTask, setCreateNewTask] = useState(false)
 
   return currentActivity?.type === "pomodoro" ? (
     <Accordion>
@@ -39,17 +53,66 @@ const UpdatePomodoroTasksPanel = () => {
               </Box>
               <AccordionIcon />
             </AccordionButton>
-            <AccordionPanel>{t.detail}</AccordionPanel>
+            <AccordionPanel>
+              <Editable
+                onSubmit={async (detail) => {
+                  await updateTaskMutation({ detail, id: t.id })
+                  refetch()
+                }}
+                defaultValue={t.detail ?? undefined}
+              >
+                <EditablePreview />
+                <EditableInput />
+              </Editable>
+            </AccordionPanel>
           </AccordionItem>
         )),
         <AccordionItem key={currentActivity.activity.tasks.length}>
           <AccordionButton>
             <Box flex="1" textAlign="left">
-              New task...
+              <Text as="i">Add new task...</Text>
             </Box>
             <AccordionIcon />
           </AccordionButton>
-          <AccordionPanel>Put a form in here</AccordionPanel>
+          <AccordionPanel>
+            {createNewTask ? (
+              <VStack>
+                <Form
+                  submitButtonProps={{ size: "md" }}
+                  submitText="Submit"
+                  onSubmit={async (values: any) => {
+                    try {
+                      await createTaskMutation({
+                        ...values,
+                        pomodoroId: currentActivity?.activity.id,
+                      })
+                    } catch (error) {
+                      return {
+                        [FORM_ERROR]:
+                          "Sorry, we had an unexpected error. Please try again. - " +
+                          error.toString(),
+                      }
+                    }
+                    refetch()
+                  }}
+                  schema={z.object({
+                    description: z.string(),
+                    detail: z.string(),
+                  })}
+                  showDevTools
+                >
+                  <FormTextInput name="description" label="Description" isRequired />
+                  <FormTextarea name="detail" label="Detail" isRequired />
+                </Form>
+                <ChakraLink onClick={() => setCreateNewTask(false)}>Cancel</ChakraLink>
+              </VStack>
+            ) : (
+              <VStack>
+                <Text>Add task search functionality here</Text>
+                <ChakraLink onClick={() => setCreateNewTask(true)}>Create new task</ChakraLink>
+              </VStack>
+            )}
+          </AccordionPanel>
         </AccordionItem>,
       ]}
     </Accordion>
