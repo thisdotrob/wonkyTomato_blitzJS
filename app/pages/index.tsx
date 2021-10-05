@@ -20,6 +20,7 @@ import {
   VStack,
   HStack,
 } from "@chakra-ui/react"
+import { BreakTime, Pomodoro } from "db"
 
 const UpdatePomodoroTasksPanel = () => {
   const { currentActivity, refetch } = useCurrentActivity()
@@ -131,76 +132,96 @@ const TopNav = () => {
   )
 }
 
-const StartPomodoroButton = () => {
-  const { currentActivity, refetch } = useCurrentActivity()
+const StartPomodoroButton = ({
+  onClick,
+  currentBreak,
+}: {
+  onClick: () => void
+  currentBreak?: BreakTime
+}) => {
   const [createPomodoroMutation] = useMutation(createPomodoro)
   const [stopBreakTimeMutation] = useMutation(stopBreakTime)
 
   return (
-    <>
-      {currentActivity?.type === "pomodoro" ? null : (
-        <Box p={4}>
-          <Button
-            onClick={async () => {
-              await createPomodoroMutation({})
-              if (currentActivity) {
-                await stopBreakTimeMutation({ id: currentActivity.activity.id })
-              }
-              refetch()
-            }}
-          >
-            Start Pomodoro
-          </Button>
-        </Box>
-      )}
-    </>
+    <Box p={4}>
+      <Button
+        onClick={async () => {
+          await createPomodoroMutation({})
+          if (currentBreak) {
+            await stopBreakTimeMutation({ id: currentBreak.id })
+          }
+          onClick()
+        }}
+      >
+        Start Pomodoro
+      </Button>
+    </Box>
   )
 }
 
-const StartBreakButton = () => {
-  const { currentActivity, refetch } = useCurrentActivity()
+const StartBreakButton = ({
+  onClick,
+  currentPomodoro,
+}: {
+  onClick: () => void
+  currentPomodoro: Pomodoro
+}) => {
   const [stopPomodoroMutation] = useMutation(stopPomodoro)
   const [createBreakTimeMutation] = useMutation(createBreakTime)
   return (
-    <>
-      {currentActivity?.type !== "pomodoro" ? null : (
-        <Box p={4}>
-          <Button
-            onClick={async () => {
-              await Promise.all([
-                stopPomodoroMutation({ id: currentActivity.activity.id }),
-                createBreakTimeMutation({}),
-              ])
-              refetch()
-            }}
-          >
-            Start Break
-          </Button>
-        </Box>
-      )}
-    </>
+    <Box p={4}>
+      <Button
+        onClick={async () => {
+          await Promise.all([
+            stopPomodoroMutation({ id: currentPomodoro.id }),
+            createBreakTimeMutation({}),
+          ])
+          onClick()
+        }}
+      >
+        Start Break
+      </Button>
+    </Box>
   )
 }
 
-const StopButton = () => {
-  const { currentActivity, refetch } = useCurrentActivity()
+const StopButton = ({
+  onClick,
+  currentBreak,
+}: {
+  onClick: () => void
+  currentBreak: BreakTime
+}) => {
   const [stopBreakTimeMutation] = useMutation(stopBreakTime)
   return (
-    <>
-      {currentActivity?.type !== "break" ? null : (
-        <Box p={4}>
-          <Button
-            onClick={async () => {
-              await stopBreakTimeMutation({ id: currentActivity!.activity.id })
-              refetch()
-            }}
-          >
-            Stop
-          </Button>
-        </Box>
-      )}
-    </>
+    <Box p={4}>
+      <Button
+        onClick={async () => {
+          await stopBreakTimeMutation({ id: currentBreak.id })
+          onClick()
+        }}
+      >
+        Stop
+      </Button>
+    </Box>
   )
+}
+
+const ActivityButtons = () => {
+  const { currentActivity, refetch } = useCurrentActivity()
+
+  if (currentActivity?.type === "break") {
+    return (
+      <>
+        <StartPomodoroButton currentBreak={currentActivity.activity} onClick={refetch} />
+        <StopButton currentBreak={currentActivity.activity} onClick={refetch} />
+      </>
+    )
+  } else if (currentActivity?.type === "pomodoro") {
+    return <StartBreakButton currentPomodoro={currentActivity.activity} onClick={refetch} />
+  } else {
+    return <StartPomodoroButton onClick={refetch} />
+  }
 }
 
 const BottomNav = () => {
@@ -208,9 +229,7 @@ const BottomNav = () => {
     <Flex bg="yellow.100" py={0} w="full" align="center">
       <Spacer />
       <HStack>
-        <StartPomodoroButton />
-        <StartBreakButton />
-        <StopButton />
+        <ActivityButtons />
       </HStack>
       <Spacer />
     </Flex>
