@@ -71,11 +71,16 @@ const CurrentActivityPanel = () => {
     }
   }, [])
 
-  return currentActivity === null ? null : (
+  if (currentActivity === null) return null
+
+  const msLeft = currentActivity.suggestedEndTime.getTime() - now.getTime()
+
+  return (
     <VStack>
       <span>{currentActivity.type === "break" ? "Break" : "Pomodoro"}</span>
       <span>
-        {new Date(currentActivity.suggestedEndTime.getTime() - now.getTime()).toLocaleTimeString()}
+        {msLeft < 0 ? "- " : null}
+        {new Date(Math.abs(msLeft)).toLocaleTimeString()}
       </span>
     </VStack>
   )
