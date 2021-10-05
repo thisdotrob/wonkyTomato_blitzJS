@@ -1,4 +1,4 @@
-import { Suspense, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { Link, BlitzPage, useMutation, Routes } from "blitz"
 import Layout from "app/core/layouts/Layout"
 import { useCurrentUser } from "app/core/hooks/useCurrentUser"
@@ -58,39 +58,27 @@ const UpdatePomodoroTasksPanel = () => {
   ) : null
 }
 
-const CurrentBreakPanel = ({ currentActivity }) => {
-  return (
-    <VStack>
-      <span>Current break</span>
-      <span>Started: {currentActivity.activity.createdAt.toLocaleTimeString()}</span>
-      <span>Suggested length: {currentActivity.suggestedLength}</span>
-      <span>Suggested end time: {currentActivity.suggestedEndTime.toLocaleTimeString()}</span>
-    </VStack>
-  )
-}
-
-const CurrentPomodoroPanel = ({ currentActivity }) => {
-  return (
-    <VStack>
-      <span>Current pomodoro</span>
-      <span>Started: {currentActivity.activity.createdAt.toLocaleTimeString()}</span>
-      <span>Suggested length: {currentActivity.suggestedLength}</span>
-      <span>Suggested end time: {currentActivity.suggestedEndTime.toLocaleTimeString()}</span>
-    </VStack>
-  )
-}
-
 const CurrentActivityPanel = () => {
   const { currentActivity } = useCurrentActivity()
 
-  switch (currentActivity?.type) {
-    case "break":
-      return <CurrentBreakPanel currentActivity={currentActivity} />
-    case "pomodoro":
-      return <CurrentPomodoroPanel currentActivity={currentActivity} />
-    default:
-      return null
-  }
+  const [now, setNow] = useState(new Date())
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), 1000)
+
+    return () => {
+      clearInterval(interval)
+    }
+  }, [])
+
+  return currentActivity === null ? null : (
+    <VStack>
+      <span>{currentActivity.type === "break" ? "Break" : "Pomodoro"}</span>
+      <span>
+        {new Date(currentActivity.suggestedEndTime.getTime() - now.getTime()).toLocaleTimeString()}
+      </span>
+    </VStack>
+  )
 }
 
 const Logout = () => {
