@@ -25,17 +25,20 @@
     ]
   },
   "dependencies": {
+    "@chakra-ui/icons": "1.0.15",
     "@chakra-ui/react": "1.6.8",
     "@emotion/react": "^11",
     "@emotion/styled": "^11",
+    "@hookform/devtools": "4.0.1",
+    "@hookform/resolvers": "2.8.1",
     "@prisma/client": "3.1.1",
     "blitz": "0.40.0",
-    "final-form": "4.20.4",
     "framer-motion": "^4",
     "lodash.debounce": "4.0.8",
+    "next-seo": "4.28.1",
     "react": "alpha",
     "react-dom": "alpha",
-    "react-final-form": "6.5.7",
+    "react-hook-form": "7.12.2",
     "react-icons": "4.3.1",
     "zod": "3.9.5"
   },

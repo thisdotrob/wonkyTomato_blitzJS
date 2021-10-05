@@ -21,11 +21,7 @@ export const TasksList = () => {
     <div>
       <ul>
         {tasks.map((task) => (
-          <li key={task.id}>
-            <Link href={Routes.EditTaskPage({ taskId: task.id })}>
-              <a>{task.description}</a>
-            </Link>
-          </li>
+          <li key={task.id}>{task.description}</li>
         ))}
       </ul>
 
@@ -49,10 +45,6 @@ const TasksPage: BlitzPage = () => {
       <p>
         <Link href={Routes.Home()}>
           <a>Home</a>
-        </Link>
-        {" | "}
-        <Link href={Routes.NewTaskPage()}>
-          <a>Create Task</a>
         </Link>
       </p>
 
