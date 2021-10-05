@@ -10,7 +10,16 @@ import stopBreakTime from "app/break-times/mutations/stopBreakTime"
 import createTask from "app/tasks/mutations/createTask"
 import { TaskForm, FORM_ERROR } from "app/tasks/components/TaskForm"
 import logout from "app/auth/mutations/logout"
-import { Container, Flex, Box, Spacer, VStack, HStack } from "@chakra-ui/react"
+import {
+  Button,
+  Link as ChakraLink,
+  Container,
+  Flex,
+  Box,
+  Spacer,
+  VStack,
+  HStack,
+} from "@chakra-ui/react"
 
 const UpdatePomodoroTasksPanel = () => {
   const { currentActivity, refetch } = useCurrentActivity()
@@ -40,7 +49,9 @@ const UpdatePomodoroTasksPanel = () => {
         {currentActivity.activity.tasks.map((t, i) => (
           <li key={i}>{t.description}</li>
         ))}
-        <button onClick={() => setAddingTask(true)}>Add task</button>
+        <Button size="sm" onClick={() => setAddingTask(true)}>
+          Add task
+        </Button>
       </VStack>
     )
   ) : null
@@ -81,43 +92,36 @@ const CurrentActivityPanel = () => {
   }
 }
 
-const CurrentUser = () => {
-  const currentUser = useCurrentUser()
-  return <>{currentUser!.email}</>
-}
-
 const Logout = () => {
   const [logoutMutation] = useMutation(logout)
   return (
-    <button
-      className="button small"
+    <ChakraLink
       onClick={async () => {
         await logoutMutation()
       }}
     >
       Logout
-    </button>
+    </ChakraLink>
   )
 }
 
 const TopNav = () => {
+  const currentUser = useCurrentUser()
   return (
     <Flex bg="red.50" py={0} w="full">
       <HStack p={4} spacing={5} w={200}>
         <Link href={Routes.TasksPage()}>
-          <a>Tasks</a>
+          <ChakraLink>Tasks</ChakraLink>
         </Link>
         <Link href={Routes.PomodorosPage()}>
-          <a>Pomodoros</a>
+          <ChakraLink>Pomodoros</ChakraLink>
         </Link>
         <Link href={Routes.BreakTimesPage()}>
-          <a>Breaks</a>
+          <ChakraLink>Breaks</ChakraLink>
         </Link>
       </HStack>
       <Spacer />
-      <Box p={4}>
-        <CurrentUser />
-      </Box>
+      <Box p={4}>{currentUser?.email}</Box>
       <Spacer />
       <Flex p={4} w={200}>
         <Spacer />
@@ -136,7 +140,7 @@ const StartPomodoroButton = () => {
     <>
       {currentActivity?.type === "pomodoro" ? null : (
         <Box p={4}>
-          <button
+          <Button
             onClick={async () => {
               await createPomodoroMutation({})
               if (currentActivity) {
@@ -146,7 +150,7 @@ const StartPomodoroButton = () => {
             }}
           >
             Start Pomodoro
-          </button>
+          </Button>
         </Box>
       )}
     </>
@@ -161,7 +165,7 @@ const StartBreakButton = () => {
     <>
       {currentActivity?.type !== "pomodoro" ? null : (
         <Box p={4}>
-          <button
+          <Button
             onClick={async () => {
               await Promise.all([
                 stopPomodoroMutation({ id: currentActivity.activity.id }),
@@ -171,7 +175,7 @@ const StartBreakButton = () => {
             }}
           >
             Start Break
-          </button>
+          </Button>
         </Box>
       )}
     </>
@@ -185,14 +189,14 @@ const StopButton = () => {
     <>
       {currentActivity?.type !== "break" ? null : (
         <Box p={4}>
-          <button
+          <Button
             onClick={async () => {
               await stopBreakTimeMutation({ id: currentActivity!.activity.id })
               refetch()
             }}
           >
             Stop
-          </button>
+          </Button>
         </Box>
       )}
     </>
