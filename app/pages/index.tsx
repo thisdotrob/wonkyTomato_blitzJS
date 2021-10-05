@@ -7,8 +7,7 @@ import createPomodoro from "app/pomodoros/mutations/createPomodoro"
 import stopPomodoro from "app/pomodoros/mutations/stopPomodoro"
 import createBreakTime from "app/break-times/mutations/createBreakTime"
 import stopBreakTime from "app/break-times/mutations/stopBreakTime"
-import createTask from "app/tasks/mutations/createTask"
-import { TaskForm, FORM_ERROR } from "app/tasks/components/TaskForm"
+import { Form } from "app/core/components/Form"
 import logout from "app/auth/mutations/logout"
 import {
   Button,
@@ -19,42 +18,46 @@ import {
   Spacer,
   VStack,
   HStack,
+  Accordion,
+  AccordionItem,
+  AccordionButton,
+  AccordionIcon,
+  AccordionPanel,
 } from "@chakra-ui/react"
 import { BreakTime, Pomodoro } from "db"
 
 const UpdatePomodoroTasksPanel = () => {
-  const { currentActivity, refetch } = useCurrentActivity()
+  const { currentActivity } = useCurrentActivity()
 
-  const [createTaskMutation] = useMutation(createTask)
-  const [addingTask, setAddingTask] = useState(false)
+  const onSubmit = () => {}
 
   return currentActivity?.type === "pomodoro" ? (
-    addingTask ? (
-      <TaskForm
-        submitText="Create Task"
-        onSubmit={async (values) => {
-          try {
-            await createTaskMutation({ ...values, pomodoroId: currentActivity.activity.id })
-            setAddingTask(false)
-            refetch()
-          } catch (error) {
-            console.error(error)
-            return {
-              [FORM_ERROR]: error.toString(),
-            }
-          }
-        }}
-      />
-    ) : (
-      <VStack>
-        {currentActivity.activity.tasks.map((t, i) => (
-          <li key={i}>{t.description}</li>
-        ))}
-        <Button size="sm" onClick={() => setAddingTask(true)}>
-          Add task
-        </Button>
-      </VStack>
-    )
+    <Accordion>
+      {[
+        ...currentActivity.activity.tasks.map((t, i) => (
+          <AccordionItem key={i}>
+            <AccordionButton>
+              <Box flex="1" textAlign="left">
+                {t.description}
+              </Box>
+              <AccordionIcon />
+            </AccordionButton>
+            <AccordionPanel>{t.detail}</AccordionPanel>
+          </AccordionItem>
+        )),
+        <AccordionItem key={currentActivity.activity.tasks.length}>
+          <AccordionButton>
+            <Box flex="1" textAlign="left">
+              New task...
+            </Box>
+            <AccordionIcon />
+          </AccordionButton>
+          <AccordionPanel>
+            <Form onSubmit={onSubmit}></Form>
+          </AccordionPanel>
+        </AccordionItem>,
+      ]}
+    </Accordion>
   ) : null
 }
 
@@ -239,9 +242,9 @@ const Home: BlitzPage = () => {
             <Box w="full" p={10} bg="gray.100">
               <CurrentActivityPanel />
             </Box>
-            <VStack w="full" alignItems="flex-start" p={10} spacing={10} bg="gray.50">
+            <Box w="full" p={10} bg="gray.50">
               <UpdatePomodoroTasksPanel />
-            </VStack>
+            </Box>
           </Flex>
           <BottomNav />
         </VStack>
