@@ -1,195 +1,236 @@
 import { Suspense, useState } from "react"
-import { Link, BlitzPage, useMutation, useQuery, Routes } from "blitz"
+import { Link, BlitzPage, useMutation, Routes } from "blitz"
 import Layout from "app/core/layouts/Layout"
 import { useCurrentUser } from "app/core/hooks/useCurrentUser"
+import { useCurrentActivity } from "app/core/hooks/useCurrentActivity"
 import createPomodoro from "app/pomodoros/mutations/createPomodoro"
 import stopPomodoro from "app/pomodoros/mutations/stopPomodoro"
-import getCurrentPomodoro from "app/pomodoros/queries/getCurrentPomodoro"
 import createBreakTime from "app/break-times/mutations/createBreakTime"
 import stopBreakTime from "app/break-times/mutations/stopBreakTime"
 import createTask from "app/tasks/mutations/createTask"
 import { TaskForm, FORM_ERROR } from "app/tasks/components/TaskForm"
-import getCurrentActivity from "app/activities/queries/getCurrentActivity"
 import logout from "app/auth/mutations/logout"
-
-const UserInfo = () => {
-  const currentUser = useCurrentUser()
-  const [logoutMutation] = useMutation(logout)
-
-  if (currentUser) {
-    return (
-      <>
-        <button
-          className="button small"
-          onClick={async () => {
-            await logoutMutation()
-          }}
-        >
-          Logout
-        </button>
-        <div>
-          User id: <code>{currentUser.id}</code>
-        </div>
-      </>
-    )
-  } else {
-    return (
-      <>
-        <Link href={Routes.SignupPage()}>
-          <a className="button small">
-            <strong>Sign Up</strong>
-          </a>
-        </Link>
-        <Link href={Routes.LoginPage()}>
-          <a className="button small">
-            <strong>Login</strong>
-          </a>
-        </Link>
-      </>
-    )
-  }
-}
+import { Container, Flex, Box, Spacer, VStack, HStack } from "@chakra-ui/react"
 
 const UpdatePomodoroTasksPanel = () => {
-  const [currentPomodoro, { remove }] = useQuery(getCurrentPomodoro, null)
+  const { currentActivity, refetch } = useCurrentActivity()
+
   const [createTaskMutation] = useMutation(createTask)
   const [addingTask, setAddingTask] = useState(false)
-  return currentPomodoro ? (
-    <>
-      {currentPomodoro.tasks.map((t, i) => (
-        <li key={i}>{t.description}</li>
-      ))}
-      {addingTask ? (
-        <TaskForm
-          submitText="Create Task"
-          onSubmit={async (values) => {
-            try {
-              await createTaskMutation({ ...values, pomodoroId: currentPomodoro.id })
-              remove()
-              setAddingTask(false)
-            } catch (error) {
-              console.error(error)
-              return {
-                [FORM_ERROR]: error.toString(),
-              }
+
+  return currentActivity?.type === "pomodoro" ? (
+    addingTask ? (
+      <TaskForm
+        submitText="Create Task"
+        onSubmit={async (values) => {
+          try {
+            await createTaskMutation({ ...values, pomodoroId: currentActivity.activity.id })
+            setAddingTask(false)
+            refetch()
+          } catch (error) {
+            console.error(error)
+            return {
+              [FORM_ERROR]: error.toString(),
             }
-          }}
-        />
-      ) : (
+          }
+        }}
+      />
+    ) : (
+      <VStack>
+        {currentActivity.activity.tasks.map((t, i) => (
+          <li key={i}>{t.description}</li>
+        ))}
         <button onClick={() => setAddingTask(true)}>Add task</button>
-      )}
-    </>
+      </VStack>
+    )
   ) : null
 }
 
+const CurrentBreakPanel = ({ currentActivity }) => {
+  return (
+    <VStack>
+      <span>Current break</span>
+      <span>Started: {currentActivity.activity.createdAt.toLocaleTimeString()}</span>
+      <span>Suggested length: {currentActivity.suggestedLength}</span>
+      <span>Suggested end time: {currentActivity.suggestedEndTime.toLocaleTimeString()}</span>
+    </VStack>
+  )
+}
+
+const CurrentPomodoroPanel = ({ currentActivity }) => {
+  return (
+    <VStack>
+      <span>Current pomodoro</span>
+      <span>Started: {currentActivity.activity.createdAt.toLocaleTimeString()}</span>
+      <span>Suggested length: {currentActivity.suggestedLength}</span>
+      <span>Suggested end time: {currentActivity.suggestedEndTime.toLocaleTimeString()}</span>
+    </VStack>
+  )
+}
+
 const CurrentActivityPanel = () => {
+  const { currentActivity } = useCurrentActivity()
+
+  switch (currentActivity?.type) {
+    case "break":
+      return <CurrentBreakPanel currentActivity={currentActivity} />
+    case "pomodoro":
+      return <CurrentPomodoroPanel currentActivity={currentActivity} />
+    default:
+      return null
+  }
+}
+
+const CurrentUser = () => {
+  const currentUser = useCurrentUser()
+  return <>{currentUser!.email}</>
+}
+
+const Logout = () => {
+  const [logoutMutation] = useMutation(logout)
+  return (
+    <button
+      className="button small"
+      onClick={async () => {
+        await logoutMutation()
+      }}
+    >
+      Logout
+    </button>
+  )
+}
+
+const TopNav = () => {
+  return (
+    <Flex bg="red.50" py={0} w="full">
+      <HStack p={4} spacing={5} w={200}>
+        <Link href={Routes.TasksPage()}>
+          <a>Tasks</a>
+        </Link>
+        <Link href={Routes.PomodorosPage()}>
+          <a>Pomodoros</a>
+        </Link>
+        <Link href={Routes.BreakTimesPage()}>
+          <a>Breaks</a>
+        </Link>
+      </HStack>
+      <Spacer />
+      <Box p={4}>
+        <CurrentUser />
+      </Box>
+      <Spacer />
+      <Flex p={4} w={200}>
+        <Spacer />
+        <Logout />
+      </Flex>
+    </Flex>
+  )
+}
+
+const StartPomodoroButton = () => {
+  const { currentActivity, refetch } = useCurrentActivity()
   const [createPomodoroMutation] = useMutation(createPomodoro)
-  const [stopPomodoroMutation] = useMutation(stopPomodoro)
-  const [createBreakTimeMutation] = useMutation(createBreakTime)
   const [stopBreakTimeMutation] = useMutation(stopBreakTime)
-  const [currentActivity, { remove }] = useQuery(getCurrentActivity, null)
 
   return (
     <>
-      {currentActivity?.type === "break" && (
-        <>
-          <span>
-            Current break started at: {currentActivity.activity.createdAt.toLocaleString()}
-          </span>
-          <br />
-          <span>Suggested length: {currentActivity.suggestedLength}</span>
-          <br />
-          <span>Suggested end time: {currentActivity.suggestedEndTime.toLocaleTimeString()}</span>
-          <br />
+      {currentActivity?.type === "pomodoro" ? null : (
+        <Box p={4}>
           <button
             onClick={async () => {
-              await Promise.all([
-                createPomodoroMutation({}),
-                stopBreakTimeMutation({ id: currentActivity.activity.id }),
-              ])
-              remove()
+              await createPomodoroMutation({})
+              if (currentActivity) {
+                await stopBreakTimeMutation({ id: currentActivity.activity.id })
+              }
+              refetch()
             }}
           >
             Start Pomodoro
           </button>
-          <button
-            onClick={async () => {
-              await stopBreakTimeMutation({ id: currentActivity.activity.id })
-              remove()
-            }}
-          >
-            Stop
-          </button>
-        </>
+        </Box>
       )}
+    </>
+  )
+}
 
-      {currentActivity?.type === "pomodoro" && (
-        <>
-          <span>
-            Current pomodoro started at: {currentActivity.activity.createdAt.toLocaleString()}
-          </span>
-          <br />
-          <span>Suggested length: {currentActivity.suggestedLength}</span>
-          <br />
-          <span>Suggested end time: {currentActivity.suggestedEndTime.toLocaleTimeString()}</span>
-          <br />
-          <UpdatePomodoroTasksPanel />
-          <br />
+const StartBreakButton = () => {
+  const { currentActivity, refetch } = useCurrentActivity()
+  const [stopPomodoroMutation] = useMutation(stopPomodoro)
+  const [createBreakTimeMutation] = useMutation(createBreakTime)
+  return (
+    <>
+      {currentActivity?.type !== "pomodoro" ? null : (
+        <Box p={4}>
           <button
             onClick={async () => {
               await Promise.all([
                 stopPomodoroMutation({ id: currentActivity.activity.id }),
                 createBreakTimeMutation({}),
               ])
-              remove()
+              refetch()
             }}
           >
             Start Break
           </button>
-        </>
-      )}
-
-      {currentActivity === null && (
-        <button
-          onClick={async () => {
-            await createPomodoroMutation({})
-            remove()
-          }}
-        >
-          Start Pomodoro
-        </button>
+        </Box>
       )}
     </>
   )
 }
 
+const StopButton = () => {
+  const { currentActivity, refetch } = useCurrentActivity()
+  const [stopBreakTimeMutation] = useMutation(stopBreakTime)
+  return (
+    <>
+      {currentActivity?.type !== "break" ? null : (
+        <Box p={4}>
+          <button
+            onClick={async () => {
+              await stopBreakTimeMutation({ id: currentActivity!.activity.id })
+              refetch()
+            }}
+          >
+            Stop
+          </button>
+        </Box>
+      )}
+    </>
+  )
+}
+
+const BottomNav = () => {
+  return (
+    <Flex bg="yellow.100" py={0} w="full" align="center">
+      <Spacer />
+      <HStack>
+        <StartPomodoroButton />
+        <StartBreakButton />
+        <StopButton />
+      </HStack>
+      <Spacer />
+    </Flex>
+  )
+}
+
 const Home: BlitzPage = () => {
   return (
-    <div>
-      <p>
-        <Link href={Routes.TasksPage()}>
-          <a>Tasks</a>
-        </Link>
-        {" | "}
-        <Link href={Routes.PomodorosPage()}>
-          <a>Pomodoros</a>
-        </Link>
-        {" | "}
-        <Link href={Routes.BreakTimesPage()}>
-          <a>Breaks</a>
-        </Link>
-      </p>
-      <div>
-        <Suspense fallback="Loading current activity...">
-          <CurrentActivityPanel />
-        </Suspense>
-      </div>
-      <div>
-        <Suspense fallback="Loading user info...">
-          <UserInfo />
-        </Suspense>
-      </div>
-    </div>
+    <Container maxW="container.md">
+      <Suspense fallback="Loading...">
+        <VStack bg="blue.50" spacing={0}>
+          <TopNav />
+          <Flex py={4} bg="green.100" w="full">
+            <Box w="full" p={10} bg="gray.100">
+              <CurrentActivityPanel />
+            </Box>
+            <VStack w="full" alignItems="flex-start" p={10} spacing={10} bg="gray.50">
+              <UpdatePomodoroTasksPanel />
+            </VStack>
+          </Flex>
+          <BottomNav />
+        </VStack>
+      </Suspense>
+    </Container>
   )
 }
 

@@ -1,5 +1,5 @@
 import { resolver } from "blitz"
-import { BreakTime, Pomodoro } from "db"
+import { BreakTime, Pomodoro, Task } from "db"
 import db from "db"
 import { z } from "zod"
 
@@ -70,6 +70,7 @@ export default resolver.pipe(
       db.pomodoro.findMany({
         where,
         orderBy,
+        include: { tasks: true },
       }),
       db.breakTime.findMany({
         where,
@@ -77,7 +78,7 @@ export default resolver.pipe(
       }),
     ])
 
-    const interspersed: (Pomodoro | BreakTime)[] = []
+    const interspersed: ((Pomodoro & { tasks: Task[] }) | BreakTime)[] = []
 
     for (let i = 0; i < todaysPomodoros.length; i++) {
       interspersed.push(todaysPomodoros[i]!)
@@ -88,7 +89,7 @@ export default resolver.pipe(
 
     const setLength = 6
 
-    const sets: (Pomodoro | BreakTime)[][] = []
+    const sets: ((Pomodoro & { tasks: Task[] }) | BreakTime)[][] = []
 
     for (let i = 0; i < interspersed.length; i += setLength) {
       sets.push(interspersed.slice(i, i + setLength))
@@ -118,7 +119,7 @@ export default resolver.pipe(
       } else if (currentSet.length % 2) {
         return {
           type: "pomodoro" as const,
-          activity: latestActivity as Pomodoro,
+          activity: latestActivity as Pomodoro & { tasks: Task[] },
           suggestedLength: suggestedLength.toFixed(),
           suggestedEndTime: suggestedEndTime,
         }
