@@ -1,6 +1,9 @@
 /* eslint-disable @next/next/no-page-custom-font */
 import { ChakraProvider } from "@chakra-ui/react"
 import LoginForm from "app/auth/components/LoginForm"
+import Layout from "app/core/layouts/Layout"
+import { PageContainer } from "app/core/components/PageContainer"
+import { Container } from "@chakra-ui/layout"
 import { APP_NAME } from "app/config"
 import theme from "app/core/theme"
 import {
@@ -53,7 +56,15 @@ export default function App({ Component, pageProps }: AppProps) {
 
 function RootErrorFallback({ error, resetErrorBoundary }: ErrorFallbackProps) {
   if (error instanceof AuthenticationError) {
-    return <LoginForm onSuccess={resetErrorBoundary} />
+    return (
+      <Layout title="Log In">
+        <PageContainer centerPage>
+          <Container>
+            <LoginForm onSuccess={resetErrorBoundary} />
+          </Container>
+        </PageContainer>
+      </Layout>
+    )
   } else if (error instanceof AuthorizationError) {
     return (
       <ErrorComponent
