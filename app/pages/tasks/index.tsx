@@ -21,7 +21,11 @@ export const TasksList = () => {
     <div>
       <ul>
         {tasks.map((task) => (
-          <li key={task.id}>{task.description}</li>
+          <li key={task.id}>
+            <Link href={Routes.EditTaskPage({ taskId: task.id })}>
+              <a>{task.description}</a>
+            </Link>
+          </li>
         ))}
       </ul>
 

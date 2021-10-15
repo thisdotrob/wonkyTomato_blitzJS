@@ -1,122 +1,147 @@
 import { Suspense, useEffect, useState } from "react"
 import { Link, BlitzPage, useMutation, Routes } from "blitz"
-import * as z from "zod"
-import Layout from "app/core/layouts/Layout"
-import { Form, FORM_ERROR } from "app/core/components/Form"
-import { FormTextInput } from "app/core/components/Forms/FormTextInput"
-import { FormTextarea } from "app/core/components/Forms/FormTextarea"
-import { useCurrentUser } from "app/core/hooks/useCurrentUser"
-import { useCurrentActivity } from "app/core/hooks/useCurrentActivity"
-import createPomodoro from "app/pomodoros/mutations/createPomodoro"
-import stopPomodoro from "app/pomodoros/mutations/stopPomodoro"
-import createBreakTime from "app/break-times/mutations/createBreakTime"
-import stopBreakTime from "app/break-times/mutations/stopBreakTime"
-import createTask from "app/tasks/mutations/createTask"
-import updateTask from "app/tasks/mutations/updateTask"
-import logout from "app/auth/mutations/logout"
+import debounce from "lodash.debounce"
 import {
   Button,
   Link as ChakraLink,
+  Heading,
   Container,
   Flex,
   Box,
   Spacer,
   VStack,
   HStack,
-  Accordion,
-  AccordionItem,
-  AccordionButton,
-  AccordionIcon,
-  AccordionPanel,
   Text,
-  Editable,
-  EditablePreview,
-  EditableInput,
+  Input,
 } from "@chakra-ui/react"
-import { BreakTime, Pomodoro } from "db"
+import { MdAddCircle, MdRemoveCircle } from "react-icons/md"
+import Layout from "app/core/layouts/Layout"
+import { useCurrentUser } from "app/core/hooks/useCurrentUser"
+import { useCurrentActivity } from "app/core/hooks/useCurrentActivity"
+import { useTasks } from "app/core/hooks/useTasks"
+import createPomodoro from "app/pomodoros/mutations/createPomodoro"
+import stopPomodoro from "app/pomodoros/mutations/stopPomodoro"
+import attachTaskToPomodoro from "app/pomodoros/mutations/attachTaskToPomodoro"
+import removeTaskFromPomodoro from "app/pomodoros/mutations/removeTaskFromPomodoro"
+import createBreakTime from "app/break-times/mutations/createBreakTime"
+import stopBreakTime from "app/break-times/mutations/stopBreakTime"
+import createTask from "app/tasks/mutations/createTask"
+import logout from "app/auth/mutations/logout"
+import { BreakTime, Pomodoro, Task } from "db"
 
-const UpdatePomodoroTasksPanel = () => {
-  const { currentActivity, refetch } = useCurrentActivity()
+type TasksPanelProps = {
+  pomodoro: Pomodoro & { tasks: Task[] }
+  refetch: () => Promise<unknown>
+}
+
+const TasksPanel = (props: TasksPanelProps) => {
+  const { pomodoro, refetch } = props
+  const currentTasks = pomodoro.tasks
+
+  const [addingTask, setAddingTask] = useState(false)
+
+  const [searchTerm, setSearchTerm] = useState<string | undefined>()
+  const debounceSetSearchTerm = debounce(setSearchTerm, 500)
+  const { tasks, refetch: refetchTasks } = useTasks(searchTerm)
+  const searchResults = tasks.filter((t) => !currentTasks.map((ct) => ct.id).includes(t.id))
+
+  const [attachTaskToPomodoroMutation] = useMutation(attachTaskToPomodoro)
+  const [removeTaskFromPomodoroMutation] = useMutation(removeTaskFromPomodoro)
   const [createTaskMutation] = useMutation(createTask)
-  const [updateTaskMutation] = useMutation(updateTask)
 
-  const [createNewTask, setCreateNewTask] = useState(false)
-
-  return currentActivity?.type === "pomodoro" ? (
-    <Accordion>
-      {[
-        ...currentActivity.activity.tasks.map((t, i) => (
-          <AccordionItem key={i}>
-            <AccordionButton>
-              <Box flex="1" textAlign="left">
-                {t.description}
-              </Box>
-              <AccordionIcon />
-            </AccordionButton>
-            <AccordionPanel>
-              <Editable
-                onSubmit={async (detail) => {
-                  await updateTaskMutation({ detail, id: t.id })
-                  refetch()
-                }}
-                defaultValue={t.detail ?? undefined}
-              >
-                <EditablePreview />
-                <EditableInput />
-              </Editable>
-            </AccordionPanel>
-          </AccordionItem>
-        )),
-        <AccordionItem key={currentActivity.activity.tasks.length}>
-          <AccordionButton>
-            <Box flex="1" textAlign="left">
-              <Text as="i">Add new task...</Text>
-            </Box>
-            <AccordionIcon />
-          </AccordionButton>
-          <AccordionPanel>
-            {createNewTask ? (
-              <VStack>
-                <Form
-                  submitButtonProps={{ size: "md" }}
-                  submitText="Submit"
-                  onSubmit={async (values: any) => {
-                    try {
-                      await createTaskMutation({
-                        ...values,
-                        pomodoroId: currentActivity?.activity.id,
-                      })
-                    } catch (error) {
-                      return {
-                        [FORM_ERROR]:
-                          "Sorry, we had an unexpected error. Please try again. - " +
-                          error.toString(),
-                      }
-                    }
-                    refetch()
-                  }}
-                  schema={z.object({
-                    description: z.string(),
-                    detail: z.string(),
-                  })}
-                  showDevTools
-                >
-                  <FormTextInput name="description" label="Description" isRequired />
-                  <FormTextarea name="detail" label="Detail" isRequired />
-                </Form>
-                <ChakraLink onClick={() => setCreateNewTask(false)}>Cancel</ChakraLink>
-              </VStack>
+  return (
+    <VStack>
+      <Heading size="md">Tasks</Heading>
+      <VStack alignItems="flex-start">
+        {currentTasks.map((t) => (
+          <HStack key={t.id}>
+            <ChakraLink>
+              <Link href={Routes.EditTaskPage({ taskId: t.id })}>
+                <Text>{t.description}</Text>
+              </Link>
+            </ChakraLink>
+            <ChakraLink
+              onClick={async () => {
+                await removeTaskFromPomodoroMutation({ id: pomodoro.id, taskId: t.id })
+                await refetch()
+                await refetchTasks()
+              }}
+            >
+              <MdRemoveCircle />
+            </ChakraLink>
+          </HStack>
+        ))}
+      </VStack>
+      {addingTask ? (
+        <VStack>
+          <HStack>
+            <Input
+              placeHolder="Task description"
+              onChange={(event) => debounceSetSearchTerm(event.target.value)}
+            />
+            <Button
+              onClick={async () => {
+                if (searchTerm) {
+                  await createTaskMutation({
+                    description: searchTerm,
+                    pomodoroId: pomodoro.id,
+                    detail: "",
+                  })
+                  await refetch()
+                  setSearchTerm(undefined)
+                  setAddingTask(false)
+                }
+              }}
+            >
+              <MdAddCircle />
+            </Button>
+          </HStack>
+          {searchTerm ? (
+            searchResults.length ? (
+              searchResults.map((sr) => (
+                <HStack key={sr.id}>
+                  <Text>{sr.description}</Text>
+                  <ChakraLink
+                    onClick={async () => {
+                      await attachTaskToPomodoroMutation({ taskId: sr.id, id: pomodoro.id })
+                      await refetch()
+                      setSearchTerm(undefined)
+                      setAddingTask(false)
+                    }}
+                  >
+                    <MdAddCircle />
+                  </ChakraLink>
+                </HStack>
+              ))
             ) : (
-              <VStack>
-                <Text>Add task search functionality here</Text>
-                <ChakraLink onClick={() => setCreateNewTask(true)}>Create new task</ChakraLink>
-              </VStack>
-            )}
-          </AccordionPanel>
-        </AccordionItem>,
-      ]}
-    </Accordion>
-  ) : null
+              <Text>No matching tasks</Text>
+            )
+          ) : null}
+          <ChakraLink
+            onClick={() => {
+              setSearchTerm(undefined)
+              setAddingTask(false)
+            }}
+          >
+            <Text>Cancel</Text>
+          </ChakraLink>
+        </VStack>
+      ) : (
+        <ChakraLink onClick={() => setAddingTask(true)}>
+          <Text>Add task</Text>
+        </ChakraLink>
+      )}
+    </VStack>
+  )
+}
+
+const RightPanel = () => {
+  const { currentActivity, refetch } = useCurrentActivity()
+  return currentActivity?.type === "pomodoro" ? (
+    <TasksPanel pomodoro={currentActivity.activity} refetch={refetch} />
+  ) : (
+    <Text>Not implemented</Text>
+  )
 }
 
 const CurrentActivityPanel = () => {
@@ -301,7 +326,7 @@ const Home: BlitzPage = () => {
               <CurrentActivityPanel />
             </Box>
             <Box w="full" p={10}>
-              <UpdatePomodoroTasksPanel />
+              <RightPanel />
             </Box>
           </Flex>
           <BottomNav />
