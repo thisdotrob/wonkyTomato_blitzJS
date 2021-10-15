@@ -20,6 +20,7 @@ model Organization {
   Pomodoro   Pomodoro[]
   Task       Task[]
   BreakTime  BreakTime[]
+  TaskDetail TaskDetail[]
 }
 
 model Membership {
@@ -35,9 +36,10 @@ model Membership {
   invitedName  String?
   invitedEmail String?
 
-  Pomodoro  Pomodoro[]
-  Task      Task[]
-  BreakTime BreakTime[]
+  Pomodoro   Pomodoro[]
+  Task       Task[]
+  BreakTime  BreakTime[]
+  TaskDetail TaskDetail[]
   @@unique([organizationId, invitedEmail])
 }
 
@@ -118,12 +120,24 @@ model Task {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   description    String
-  detail         String?
+  detail         TaskDetail[]
   pomodoros      Pomodoro[]
   organization   Organization @relation(fields: [organizationId], references: [id])
   owner          Membership   @relation(fields: [membershipId], references: [id])
   organizationId Int
   membershipId   Int
+}
+
+model TaskDetail {
+  id             Int          @id @default(autoincrement())
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  task           Task         @relation(fields: [taskId], references: [id])
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  owner          Membership   @relation(fields: [membershipId], references: [id])
+  organizationId Int
+  membershipId   Int
+  taskId         Int
 }
 
 model BreakTime {
