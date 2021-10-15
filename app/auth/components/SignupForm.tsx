@@ -39,6 +39,7 @@ export const SignupForm = (props: SignupFormProps) => {
         }}
       >
         <FormTextInput type="email" name="email" label="Email" placeholder="Email" />
+        <FormTextInput name="organization" label="Organization" placeholder="Organization" />
         <FormTextInput type="password" name="password" label="Password" placeholder="Password" />
       </Form>
 
