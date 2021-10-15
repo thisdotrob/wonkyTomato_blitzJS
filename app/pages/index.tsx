@@ -161,12 +161,22 @@ const CurrentActivityPanel = () => {
 
   const msLeft = currentActivity.suggestedEndTime.getTime() - now.getTime()
 
+  const timeLeft = new Date(Math.abs(msLeft))
+
+  const padded = (num: number) => (num < 10 ? `0${num}` : num)
+
+  const hoursLeft = padded(timeLeft.getUTCHours())
+
+  const minutesLeft = padded(timeLeft.getUTCMinutes())
+
+  const secondsLeft = padded(timeLeft.getUTCSeconds())
+
   return (
     <VStack>
       <span>{currentActivity.type === "break" ? "Break" : "Pomodoro"}</span>
       <span>
         {msLeft < 0 ? "- " : null}
-        {new Date(Math.abs(msLeft)).toLocaleTimeString()}
+        {hoursLeft}:{minutesLeft}:{secondsLeft}
       </span>
     </VStack>
   )
