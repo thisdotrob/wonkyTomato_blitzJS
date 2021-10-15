@@ -17,7 +17,6 @@ import { styles } from "./foundations/styles"
 const extendThemeObj: ThemeOverride = {
   config: {
     initialColorMode: "light",
-    useSystemColorMode: true,
   },
   fonts,
   styles,
