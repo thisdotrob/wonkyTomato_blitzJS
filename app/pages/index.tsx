@@ -20,6 +20,7 @@ import Layout from "app/core/layouts/Layout"
 import { TopNav } from "app/core/components/TopNav"
 import { useCurrentActivity } from "app/core/hooks/useCurrentActivity"
 import { useTasks } from "app/core/hooks/useTasks"
+import { useNow } from "app/core/hooks/useNow"
 import createPomodoro from "app/pomodoros/mutations/createPomodoro"
 import stopPomodoro from "app/pomodoros/mutations/stopPomodoro"
 import attachTaskToPomodoro from "app/pomodoros/mutations/attachTaskToPomodoro"
@@ -144,12 +145,13 @@ const RightPanel = () => {
 }
 
 type TimeLeftProps = {
-  now: Date
   suggestedEndTime: Date
 }
 
 const TimeLeft = (props: TimeLeftProps) => {
-  const { now, suggestedEndTime } = props
+  const { suggestedEndTime } = props
+
+  const now = useNow()
 
   const msLeft = suggestedEndTime.getTime() - now.getTime()
 
@@ -170,15 +172,7 @@ const TimeLeft = (props: TimeLeftProps) => {
 }
 
 const CurrentActivityPanel = () => {
-  const [now, setNow] = useState(new Date())
-
-  useEffect(() => {
-    const interval = setInterval(() => setNow(new Date()), 1000)
-
-    return () => {
-      clearInterval(interval)
-    }
-  }, [])
+  const now = useNow()
 
   const { currentActivity, refetch } = useCurrentActivity()
 
@@ -204,9 +198,7 @@ const CurrentActivityPanel = () => {
   return currentActivity ? (
     <VStack>
       <Heading size="md">{currentActivity.type === "break" ? "Break" : "Pomodoro"}</Heading>
-      {currentActivity ? (
-        <TimeLeft now={now} suggestedEndTime={currentActivity.suggestedEndTime} />
-      ) : null}
+      {currentActivity ? <TimeLeft suggestedEndTime={currentActivity.suggestedEndTime} /> : null}
       {currentActivity?.type === "break" &&
       now.getTime() < currentActivity.suggestedEndTime.getTime() ? (
         <Checkbox onChange={(e) => setStopAutomatically(e.target.checked)}>
