@@ -20,7 +20,7 @@ export const TopNav = () => {
   const currentUser = useCurrentUser()
   return (
     <Flex py={0} w="full">
-      <HStack p={4} spacing={5} w={200}>
+      <HStack p={4} spacing={5} w={340}>
         <Link href={Routes.Home()}>
           <ChakraLink>Home</ChakraLink>
         </Link>
@@ -37,7 +37,7 @@ export const TopNav = () => {
       <Spacer />
       <Box p={4}>{currentUser?.email}</Box>
       <Spacer />
-      <Flex p={4} w={200}>
+      <Flex p={4} w={340}>
         <Spacer />
         <Logout />
       </Flex>
