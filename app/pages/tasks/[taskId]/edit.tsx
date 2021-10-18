@@ -1,4 +1,4 @@
-import { Suspense } from "react"
+import { useState, Suspense } from "react"
 import { Link, useQuery, useMutation, useParam, BlitzPage, Routes } from "blitz"
 import {
   Box,
@@ -18,45 +18,108 @@ import { useCurrentUser } from "app/core/hooks/useCurrentUser"
 import Layout from "app/core/layouts/Layout"
 import getTask from "app/tasks/queries/getTask"
 import updateTask from "app/tasks/mutations/updateTask"
+import createTaskDetail from "app/taskDetails/mutations/createTaskDetail"
+import updateTaskDetail from "app/taskDetails/mutations/updateTaskDetail"
+import * as validations from "app/auth/validations"
+import { Form, FORM_ERROR } from "app/core/components/Form"
+import { FormTextarea } from "app/core/components/Forms/FormTextarea"
+import { TaskDetail } from "db"
+
+type EditableTaskDetailProps = {
+  taskDetail: TaskDetail
+}
+
+const EditableTaskDetail = (props: EditableTaskDetailProps) => {
+  const { taskDetail } = props
+
+  const [updateTaskDetailMutation] = useMutation(updateTaskDetail)
+
+  return (
+    <Editable
+      onSubmit={async (body) => {
+        await updateTaskDetailMutation({ body, id: taskDetail.id })
+      }}
+      defaultValue={taskDetail.body}
+    >
+      <EditablePreview />
+      <EditableInput />
+    </Editable>
+  )
+}
+
+type CreateTaskDetailProps = {
+  taskId: number
+  onSuccess: () => Promise<any>
+}
+
+const CreateTaskDetail = (props: CreateTaskDetailProps) => {
+  const { onSuccess, taskId } = props
+  const [createTaskDetailMutation] = useMutation(createTaskDetail)
+
+  return (
+    <VStack>
+      <Form
+        submitText="Add task detail"
+        schema={validations.TaskDetail}
+        initialValues={{ body: "" }}
+        onSubmit={async (values) => {
+          try {
+            await createTaskDetailMutation({ taskId, ...values })
+            await onSuccess()
+          } catch (error) {
+            return {
+              [FORM_ERROR]:
+                "Sorry, we had an unexpected error. Please try again. - " + error.toString(),
+            }
+          }
+        }}
+        submitButtonProps={{
+          size: "sm",
+        }}
+        stackProps={{
+          direction: "row",
+        }}
+      >
+        <FormTextarea name="body" placeholder="Detail" />
+      </Form>
+    </VStack>
+  )
+}
 
 export const EditTask = () => {
   const taskId = useParam("taskId", "number")
-  const [task] = useQuery(
-    getTask,
-    { id: taskId },
-    {
-      // This ensures the query never refreshes and overwrites the form data while the user is editing.
-      staleTime: Infinity,
-    }
-  )
+  const [task, { refetch }] = useQuery(getTask, { id: taskId })
   const [updateTaskMutation] = useMutation(updateTask)
+  const [creatingTaskDetail, setCreatingTaskDetail] = useState(false)
+  const onCreateTaskDetailSuccess = async () => {
+    setCreatingTaskDetail(false)
+    await refetch()
+  }
 
   return (
-    <>
+    <VStack>
       <Heading size="md">
         <Editable
           onSubmit={async (description) => {
             await updateTaskMutation({ description, id: task.id })
           }}
           defaultValue={task.description}
-          placeholder="Click here to add detail"
         >
           <EditablePreview />
           <EditableInput />
         </Editable>
       </Heading>
-
-      <Editable
-        onSubmit={async (detail) => {
-          await updateTaskMutation({ detail, id: task.id })
-        }}
-        defaultValue={task.detail ?? undefined}
-        placeholder="Click here to add detail"
-      >
-        <EditablePreview />
-        <EditableInput />
-      </Editable>
-    </>
+      <VStack>
+        {task.details.map((d) => (
+          <EditableTaskDetail key={d.id} taskDetail={d} />
+        ))}
+      </VStack>
+      {creatingTaskDetail ? (
+        <CreateTaskDetail onSuccess={onCreateTaskDetailSuccess} taskId={task.id} />
+      ) : (
+        <ChakraLink onClick={() => setCreatingTaskDetail(true)}>Add detail...</ChakraLink>
+      )}
+    </VStack>
   )
 }
 

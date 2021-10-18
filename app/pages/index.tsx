@@ -76,7 +76,7 @@ const TasksPanel = (props: TasksPanelProps) => {
         <VStack>
           <HStack>
             <Input
-              placeHolder="Task description"
+              placeholder="Task description"
               onChange={(event) => debounceSetSearchTerm(event.target.value)}
             />
             <Button
@@ -85,7 +85,6 @@ const TasksPanel = (props: TasksPanelProps) => {
                   await createTaskMutation({
                     description: searchTerm,
                     pomodoroId: pomodoro.id,
-                    detail: "",
                   })
                   await refetch()
                   setSearchTerm(undefined)

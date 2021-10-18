@@ -7,6 +7,7 @@ import {
   Icon,
   SlideFade,
   Stack,
+  StackProps,
 } from "@chakra-ui/react"
 import { DevTool } from "@hookform/devtools"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -31,6 +32,7 @@ export interface FormProps<S extends z.ZodType<any, any>> extends BoxProps {
   showResetButton?: boolean
   resetText?: string
   buttonSize?: ButtonProps["size"]
+  stackProps?: Partial<StackProps>
 }
 
 interface OnSubmitResult {
@@ -64,6 +66,7 @@ export function Form<S extends z.ZodType<any, any>>({
   showResetButton,
   resetText,
   buttonSize = "lg",
+  stackProps,
   ...props
 }: FormProps<S>) {
   const ctx = useForm<z.infer<S>>({
@@ -94,7 +97,7 @@ export function Form<S extends z.ZodType<any, any>>({
             }
           })}
         >
-          <Stack spacing={6}>
+          <Stack spacing={8} {...stackProps}>
             {/* Form fields supplied as children are rendered here */}
             {children}
 

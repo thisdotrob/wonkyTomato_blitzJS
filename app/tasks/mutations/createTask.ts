@@ -4,7 +4,6 @@ import { z } from "zod"
 
 const CreateTask = z.object({
   description: z.string(),
-  detail: z.string(),
   pomodoroId: z.number().optional(),
 })
 

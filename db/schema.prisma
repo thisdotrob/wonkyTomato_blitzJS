@@ -120,7 +120,7 @@ model Task {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   description    String
-  detail         TaskDetail[]
+  details        TaskDetail[]
   pomodoros      Pomodoro[]
   organization   Organization @relation(fields: [organizationId], references: [id])
   owner          Membership   @relation(fields: [membershipId], references: [id])
@@ -132,6 +132,7 @@ model TaskDetail {
   id             Int          @id @default(autoincrement())
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
+  body           String
   task           Task         @relation(fields: [taskId], references: [id])
   organization   Organization @relation(fields: [organizationId], references: [id])
   owner          Membership   @relation(fields: [membershipId], references: [id])

@@ -32,3 +32,7 @@ export const ChangePassword = z.object({
   currentPassword: z.string(),
   newPassword: password,
 })
+
+export const TaskDetail = z.object({
+  body: z.string(),
+})

@@ -12,7 +12,10 @@ export default resolver.pipe(resolver.zod(GetTask), resolver.authorize(), async 
 
   if (!orgId) throw new Error("Missing session.orgId")
 
-  const task = await db.task.findFirst({ where: { id, organizationId: orgId } })
+  const task = await db.task.findFirst({
+    where: { id, organizationId: orgId },
+    include: { details: true },
+  })
 
   if (!task) throw new NotFoundError()
 
