@@ -1,6 +1,8 @@
 import { Suspense } from "react"
-import { Head, Link, usePaginatedQuery, useRouter, BlitzPage, Routes } from "blitz"
+import { usePaginatedQuery, useRouter, BlitzPage } from "blitz"
+import { Button, Container, Heading, HStack, Text, VStack } from "@chakra-ui/react"
 import Layout from "app/core/layouts/Layout"
+import { TopNav } from "app/core/components/TopNav"
 import getPomodoros from "app/pomodoros/queries/getPomodoros"
 
 const ITEMS_PER_PAGE = 100
@@ -18,47 +20,43 @@ export const PomodorosList = () => {
   const goToNextPage = () => router.push({ query: { page: page + 1 } })
 
   return (
-    <div>
-      <ul>
-        {pomodoros.map((pomodoro) => (
-          <li key={pomodoro.id}>
-            {pomodoro.createdAt.toLocaleString()}
-            {pomodoro.stoppedAt ? ` - ${pomodoro.stoppedAt.toLocaleTimeString()}` : null}
-          </li>
-        ))}
-      </ul>
+    <VStack>
+      {pomodoros.map((pomodoro) => (
+        <Text key={pomodoro.id}>
+          {pomodoro.createdAt.toLocaleString()}
+          {pomodoro.stoppedAt ? ` - ${pomodoro.stoppedAt.toLocaleTimeString()}` : null}
+        </Text>
+      ))}
 
-      <button disabled={page === 0} onClick={goToPreviousPage}>
-        Previous
-      </button>
-      <button disabled={!hasMore} onClick={goToNextPage}>
-        Next
-      </button>
-    </div>
+      <HStack>
+        <Button disabled={page === 0} onClick={goToPreviousPage}>
+          Previous
+        </Button>
+        <Button disabled={!hasMore} onClick={goToNextPage}>
+          Next
+        </Button>
+      </HStack>
+    </VStack>
   )
 }
 
 const PomodorosPage: BlitzPage = () => {
   return (
-    <>
-      <Head>
-        <title>Pomodoros</title>
-      </Head>
-
-      <p>
-        <Link href={Routes.Home()}>
-          <a>Home</a>
-        </Link>
-      </p>
-
-      <Suspense fallback={<div>Loading...</div>}>
-        <PomodorosList />
+    <Container maxW="container.lg">
+      <Suspense fallback="Loading...">
+        <VStack spacing={0}>
+          <TopNav />
+          <VStack>
+            <Heading size="md">Pomodoros</Heading>
+            <PomodorosList />
+          </VStack>
+        </VStack>
       </Suspense>
-    </>
+    </Container>
   )
 }
 
 PomodorosPage.authenticate = true
-PomodorosPage.getLayout = (page) => <Layout>{page}</Layout>
+PomodorosPage.getLayout = (page) => <Layout title="Pomodoros">{page}</Layout>
 
 export default PomodorosPage
