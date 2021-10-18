@@ -1,6 +1,8 @@
 import { Suspense } from "react"
-import { Head, Link, usePaginatedQuery, useRouter, BlitzPage, Routes } from "blitz"
+import { Link, usePaginatedQuery, useRouter, BlitzPage, Routes } from "blitz"
+import { Button, Link as ChakraLink, Container, Heading, HStack, VStack } from "@chakra-ui/react"
 import Layout from "app/core/layouts/Layout"
+import { TopNav } from "app/core/components/TopNav"
 import getTasks from "app/tasks/queries/getTasks"
 
 const ITEMS_PER_PAGE = 100
@@ -18,44 +20,38 @@ export const TasksList = () => {
   const goToNextPage = () => router.push({ query: { page: page + 1 } })
 
   return (
-    <div>
-      <ul>
-        {tasks.map((task) => (
-          <li key={task.id}>
-            <Link href={Routes.EditTaskPage({ taskId: task.id })}>
-              <a>{task.description}</a>
-            </Link>
-          </li>
-        ))}
-      </ul>
+    <VStack>
+      {tasks.map((task) => (
+        <Link key={task.id} href={Routes.EditTaskPage({ taskId: task.id })}>
+          <ChakraLink>{task.description}</ChakraLink>
+        </Link>
+      ))}
 
-      <button disabled={page === 0} onClick={goToPreviousPage}>
-        Previous
-      </button>
-      <button disabled={!hasMore} onClick={goToNextPage}>
-        Next
-      </button>
-    </div>
+      <HStack>
+        <Button disabled={page === 0} onClick={goToPreviousPage}>
+          Previous
+        </Button>
+        <Button disabled={!hasMore} onClick={goToNextPage}>
+          Next
+        </Button>
+      </HStack>
+    </VStack>
   )
 }
 
 const TasksPage: BlitzPage = () => {
   return (
-    <>
-      <Head>
-        <title>Tasks</title>
-      </Head>
-
-      <p>
-        <Link href={Routes.Home()}>
-          <a>Home</a>
-        </Link>
-      </p>
-
-      <Suspense fallback={<div>Loading...</div>}>
-        <TasksList />
+    <Container maxW="container.lg">
+      <Suspense fallback="Loading...">
+        <VStack spacing={0}>
+          <TopNav />
+          <VStack>
+            <Heading size="md">Tasks</Heading>
+            <TasksList />
+          </VStack>
+        </VStack>
       </Suspense>
-    </>
+    </Container>
   )
 }
 
