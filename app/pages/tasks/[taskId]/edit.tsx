@@ -1,5 +1,5 @@
 import { useState, Suspense } from "react"
-import { Link, useQuery, useMutation, useParam, BlitzPage, Routes } from "blitz"
+import { useQuery, useMutation, useParam, BlitzPage } from "blitz"
 import {
   Box,
   Container,
@@ -8,14 +8,11 @@ import {
   EditablePreview,
   Flex,
   Heading,
-  HStack,
   Link as ChakraLink,
-  Spacer,
   VStack,
 } from "@chakra-ui/react"
-import logout from "app/auth/mutations/logout"
-import { useCurrentUser } from "app/core/hooks/useCurrentUser"
 import Layout from "app/core/layouts/Layout"
+import { TopNav } from "app/core/components/TopNav"
 import getTask from "app/tasks/queries/getTask"
 import updateTask from "app/tasks/mutations/updateTask"
 import createTaskDetail from "app/taskDetails/mutations/createTaskDetail"
@@ -120,45 +117,6 @@ export const EditTask = () => {
         <ChakraLink onClick={() => setCreatingTaskDetail(true)}>Add detail...</ChakraLink>
       )}
     </VStack>
-  )
-}
-
-const Logout = () => {
-  const [logoutMutation] = useMutation(logout)
-  return (
-    <ChakraLink
-      onClick={async () => {
-        await logoutMutation()
-      }}
-    >
-      Logout
-    </ChakraLink>
-  )
-}
-
-const TopNav = () => {
-  const currentUser = useCurrentUser()
-  return (
-    <Flex py={0} w="full">
-      <HStack p={4} spacing={5} w={200}>
-        <Link href={Routes.Home()}>
-          <ChakraLink>Current Activity</ChakraLink>
-        </Link>
-        <Link href={Routes.PomodorosPage()}>
-          <ChakraLink>Pomodoros</ChakraLink>
-        </Link>
-        <Link href={Routes.BreakTimesPage()}>
-          <ChakraLink>Breaks</ChakraLink>
-        </Link>
-      </HStack>
-      <Spacer />
-      <Box p={4}>{currentUser?.email}</Box>
-      <Spacer />
-      <Flex p={4} w={200}>
-        <Spacer />
-        <Logout />
-      </Flex>
-    </Flex>
   )
 }
 

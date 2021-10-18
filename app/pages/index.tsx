@@ -16,7 +16,7 @@ import {
 } from "@chakra-ui/react"
 import { MdAddCircle, MdRemoveCircle } from "react-icons/md"
 import Layout from "app/core/layouts/Layout"
-import { useCurrentUser } from "app/core/hooks/useCurrentUser"
+import { TopNav } from "app/core/components/TopNav"
 import { useCurrentActivity } from "app/core/hooks/useCurrentActivity"
 import { useTasks } from "app/core/hooks/useTasks"
 import createPomodoro from "app/pomodoros/mutations/createPomodoro"
@@ -26,7 +26,6 @@ import removeTaskFromPomodoro from "app/pomodoros/mutations/removeTaskFromPomodo
 import createBreakTime from "app/break-times/mutations/createBreakTime"
 import stopBreakTime from "app/break-times/mutations/stopBreakTime"
 import createTask from "app/tasks/mutations/createTask"
-import logout from "app/auth/mutations/logout"
 import { BreakTime, Pomodoro, Task } from "db"
 
 type TasksPanelProps = {
@@ -181,45 +180,6 @@ const CurrentActivityPanel = () => {
   )
 }
 
-const Logout = () => {
-  const [logoutMutation] = useMutation(logout)
-  return (
-    <ChakraLink
-      onClick={async () => {
-        await logoutMutation()
-      }}
-    >
-      Logout
-    </ChakraLink>
-  )
-}
-
-const TopNav = () => {
-  const currentUser = useCurrentUser()
-  return (
-    <Flex py={0} w="full">
-      <HStack p={4} spacing={5} w={200}>
-        <Link href={Routes.TasksPage()}>
-          <ChakraLink>Tasks</ChakraLink>
-        </Link>
-        <Link href={Routes.PomodorosPage()}>
-          <ChakraLink>Pomodoros</ChakraLink>
-        </Link>
-        <Link href={Routes.BreakTimesPage()}>
-          <ChakraLink>Breaks</ChakraLink>
-        </Link>
-      </HStack>
-      <Spacer />
-      <Box p={4}>{currentUser?.email}</Box>
-      <Spacer />
-      <Flex p={4} w={200}>
-        <Spacer />
-        <Logout />
-      </Flex>
-    </Flex>
-  )
-}
-
 const StartPomodoroButton = ({
   onClick,
   currentBreak,
@@ -326,7 +286,7 @@ const BottomNav = () => {
 
 const Home: BlitzPage = () => {
   return (
-    <Container maxW="container.md">
+    <Container maxW="container.lg">
       <Suspense fallback="Loading...">
         <VStack spacing={0}>
           <TopNav />
