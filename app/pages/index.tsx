@@ -13,6 +13,7 @@ import {
   HStack,
   Text,
   Input,
+  Checkbox,
 } from "@chakra-ui/react"
 import { MdAddCircle, MdRemoveCircle } from "react-icons/md"
 import Layout from "app/core/layouts/Layout"
@@ -142,9 +143,33 @@ const RightPanel = () => {
   )
 }
 
-const CurrentActivityPanel = () => {
-  const { currentActivity } = useCurrentActivity()
+type TimeLeftProps = {
+  now: Date
+  suggestedEndTime: Date
+}
 
+const TimeLeft = (props: TimeLeftProps) => {
+  const { now, suggestedEndTime } = props
+
+  const msLeft = suggestedEndTime.getTime() - now.getTime()
+
+  const timeLeft = new Date(Math.abs(msLeft))
+
+  const padded = (num: number) => (num < 10 ? `0${num}` : num)
+
+  const hoursLeft = padded(timeLeft.getUTCHours())
+  const minutesLeft = padded(timeLeft.getUTCMinutes())
+  const secondsLeft = padded(timeLeft.getUTCSeconds())
+
+  return (
+    <Text>
+      {msLeft < 0 ? "- " : null}
+      {hoursLeft}:{minutesLeft}:{secondsLeft}
+    </Text>
+  )
+}
+
+const CurrentActivityPanel = () => {
   const [now, setNow] = useState(new Date())
 
   useEffect(() => {
@@ -155,29 +180,41 @@ const CurrentActivityPanel = () => {
     }
   }, [])
 
-  if (currentActivity === null) return null
+  const { currentActivity, refetch } = useCurrentActivity()
 
-  const msLeft = currentActivity.suggestedEndTime.getTime() - now.getTime()
+  const [stopAutomatically, setStopAutomatically] = useState(false)
 
-  const timeLeft = new Date(Math.abs(msLeft))
+  const [stopBreakTimeMutation] = useMutation(stopBreakTime)
 
-  const padded = (num: number) => (num < 10 ? `0${num}` : num)
+  useEffect(() => {
+    if (currentActivity !== null && stopAutomatically) {
+      const now = new Date()
 
-  const hoursLeft = padded(timeLeft.getUTCHours())
+      const interval = setInterval(async () => {
+        await stopBreakTimeMutation({ id: currentActivity.activity.id })
+        await refetch()
+      }, currentActivity.suggestedEndTime.getTime() - now.getTime())
 
-  const minutesLeft = padded(timeLeft.getUTCMinutes())
+      return () => {
+        clearInterval(interval)
+      }
+    }
+  }, [currentActivity, refetch, stopBreakTimeMutation, stopAutomatically])
 
-  const secondsLeft = padded(timeLeft.getUTCSeconds())
-
-  return (
+  return currentActivity ? (
     <VStack>
-      <span>{currentActivity.type === "break" ? "Break" : "Pomodoro"}</span>
-      <span>
-        {msLeft < 0 ? "- " : null}
-        {hoursLeft}:{minutesLeft}:{secondsLeft}
-      </span>
+      <Heading size="md">{currentActivity.type === "break" ? "Break" : "Pomodoro"}</Heading>
+      {currentActivity ? (
+        <TimeLeft now={now} suggestedEndTime={currentActivity.suggestedEndTime} />
+      ) : null}
+      {currentActivity?.type === "break" &&
+      now.getTime() < currentActivity.suggestedEndTime.getTime() ? (
+        <Checkbox onChange={(e) => setStopAutomatically(e.target.checked)}>
+          Stop automatically
+        </Checkbox>
+      ) : null}
     </VStack>
-  )
+  ) : null
 }
 
 const StartPomodoroButton = ({
