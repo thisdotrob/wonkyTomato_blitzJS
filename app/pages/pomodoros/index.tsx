@@ -1,6 +1,14 @@
 import { Suspense } from "react"
-import { usePaginatedQuery, useRouter, BlitzPage } from "blitz"
-import { Button, Container, Heading, HStack, Text, VStack } from "@chakra-ui/react"
+import { usePaginatedQuery, useRouter, BlitzPage, Link, Routes } from "blitz"
+import {
+  Button,
+  Container,
+  Heading,
+  HStack,
+  Link as ChakraLink,
+  Text,
+  VStack,
+} from "@chakra-ui/react"
 import Layout from "app/core/layouts/Layout"
 import { TopNav } from "app/core/components/TopNav"
 import getPomodoros from "app/pomodoros/queries/getPomodoros"
@@ -22,10 +30,14 @@ export const PomodorosList = () => {
   return (
     <VStack>
       {pomodoros.map((pomodoro) => (
-        <Text key={pomodoro.id}>
-          {pomodoro.createdAt.toLocaleString()}
-          {pomodoro.stoppedAt ? ` - ${pomodoro.stoppedAt.toLocaleTimeString()}` : null}
-        </Text>
+        <ChakraLink key={pomodoro.id}>
+          <Link href={Routes.EditPomodoroPage({ pomodoroId: pomodoro.id })}>
+            <Text>
+              {pomodoro.createdAt.toLocaleString()}
+              {pomodoro.stoppedAt ? ` - ${pomodoro.stoppedAt.toLocaleTimeString()}` : null}
+            </Text>
+          </Link>
+        </ChakraLink>
       ))}
 
       <HStack>
