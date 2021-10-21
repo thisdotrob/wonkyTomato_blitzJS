@@ -1,9 +1,7 @@
 import { Suspense, useEffect, useState } from "react"
-import { Link, BlitzPage, useMutation, Routes } from "blitz"
-import debounce from "lodash.debounce"
+import { BlitzPage, useMutation } from "blitz"
 import {
   Button,
-  Link as ChakraLink,
   Heading,
   Container,
   Flex,
@@ -12,128 +10,18 @@ import {
   VStack,
   HStack,
   Text,
-  Input,
   Checkbox,
 } from "@chakra-ui/react"
-import { MdAddCircle, MdRemoveCircle } from "react-icons/md"
 import Layout from "app/core/layouts/Layout"
 import { TopNav } from "app/core/components/TopNav"
 import { useCurrentActivity } from "app/core/hooks/useCurrentActivity"
-import { useTasks } from "app/core/hooks/useTasks"
 import { useNow } from "app/core/hooks/useNow"
+import { TasksPanel } from "app/pomodoros/components/TasksPanel"
 import createPomodoro from "app/pomodoros/mutations/createPomodoro"
 import stopPomodoro from "app/pomodoros/mutations/stopPomodoro"
-import attachTaskToPomodoro from "app/pomodoros/mutations/attachTaskToPomodoro"
-import removeTaskFromPomodoro from "app/pomodoros/mutations/removeTaskFromPomodoro"
 import createBreakTime from "app/break-times/mutations/createBreakTime"
 import stopBreakTime from "app/break-times/mutations/stopBreakTime"
-import createTask from "app/tasks/mutations/createTask"
-import { BreakTime, Pomodoro, Task } from "db"
-
-type TasksPanelProps = {
-  pomodoro: Pomodoro & { tasks: Task[] }
-  refetch: () => Promise<unknown>
-}
-
-const TasksPanel = (props: TasksPanelProps) => {
-  const { pomodoro, refetch } = props
-  const currentTasks = pomodoro.tasks
-
-  const [addingTask, setAddingTask] = useState(false)
-
-  const [searchTerm, setSearchTerm] = useState<string | undefined>()
-  const debounceSetSearchTerm = debounce(setSearchTerm, 500)
-  const { tasks, refetch: refetchTasks } = useTasks(searchTerm)
-  const searchResults = tasks.filter((t) => !currentTasks.map((ct) => ct.id).includes(t.id))
-
-  const [attachTaskToPomodoroMutation] = useMutation(attachTaskToPomodoro)
-  const [removeTaskFromPomodoroMutation] = useMutation(removeTaskFromPomodoro)
-  const [createTaskMutation] = useMutation(createTask)
-
-  return (
-    <VStack>
-      <Heading size="md">Tasks</Heading>
-      <VStack alignItems="flex-start">
-        {currentTasks.map((t) => (
-          <HStack key={t.id}>
-            <ChakraLink>
-              <Link href={Routes.EditTaskPage({ taskId: t.id })}>
-                <Text>{t.description}</Text>
-              </Link>
-            </ChakraLink>
-            <ChakraLink
-              onClick={async () => {
-                await removeTaskFromPomodoroMutation({ id: pomodoro.id, taskId: t.id })
-                await refetch()
-                await refetchTasks()
-              }}
-            >
-              <MdRemoveCircle />
-            </ChakraLink>
-          </HStack>
-        ))}
-      </VStack>
-      {addingTask ? (
-        <VStack>
-          <HStack>
-            <Input
-              placeholder="Task description"
-              onChange={(event) => debounceSetSearchTerm(event.target.value)}
-            />
-            <Button
-              onClick={async () => {
-                if (searchTerm) {
-                  await createTaskMutation({
-                    description: searchTerm,
-                    pomodoroId: pomodoro.id,
-                  })
-                  await refetch()
-                  setSearchTerm(undefined)
-                  setAddingTask(false)
-                }
-              }}
-            >
-              <MdAddCircle />
-            </Button>
-          </HStack>
-          {searchTerm ? (
-            searchResults.length ? (
-              searchResults.map((sr) => (
-                <HStack key={sr.id}>
-                  <Text>{sr.description}</Text>
-                  <ChakraLink
-                    onClick={async () => {
-                      await attachTaskToPomodoroMutation({ taskId: sr.id, id: pomodoro.id })
-                      await refetch()
-                      setSearchTerm(undefined)
-                      setAddingTask(false)
-                    }}
-                  >
-                    <MdAddCircle />
-                  </ChakraLink>
-                </HStack>
-              ))
-            ) : (
-              <Text>No matching tasks</Text>
-            )
-          ) : null}
-          <ChakraLink
-            onClick={() => {
-              setSearchTerm(undefined)
-              setAddingTask(false)
-            }}
-          >
-            <Text>Cancel</Text>
-          </ChakraLink>
-        </VStack>
-      ) : (
-        <ChakraLink onClick={() => setAddingTask(true)}>
-          <Text>Add task</Text>
-        </ChakraLink>
-      )}
-    </VStack>
-  )
-}
+import { BreakTime, Pomodoro } from "db"
 
 const RightPanel = () => {
   const { currentActivity, refetch } = useCurrentActivity()
