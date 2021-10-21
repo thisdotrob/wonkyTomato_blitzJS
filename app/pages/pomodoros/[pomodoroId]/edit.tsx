@@ -126,7 +126,10 @@ export const EditPomodoro = () => {
           </VStack>
         )}
       </VStack>
-      <TasksPanel pomodoro={pomodoro} refetch={refetch} />
+      <VStack>
+        <Heading size="sm">Tasks</Heading>
+        <TasksPanel pomodoro={pomodoro} refetch={refetch} />
+      </VStack>
     </VStack>
   )
 }

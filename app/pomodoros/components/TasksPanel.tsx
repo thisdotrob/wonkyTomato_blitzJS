@@ -31,15 +31,9 @@ export const TasksPanel = (props: TasksPanelProps) => {
 
   return (
     <VStack>
-      <Heading size="md">Tasks</Heading>
       <VStack alignItems="flex-start">
         {currentTasks.map((t) => (
           <HStack key={t.id}>
-            <ChakraLink>
-              <Link href={Routes.EditTaskPage({ taskId: t.id })}>
-                <Text>{t.description}</Text>
-              </Link>
-            </ChakraLink>
             <ChakraLink
               onClick={async () => {
                 await removeTaskFromPomodoroMutation({ id: pomodoro.id, taskId: t.id })
