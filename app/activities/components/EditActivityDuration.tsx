@@ -1,4 +1,4 @@
-import { Suspense, useState } from "react"
+import { useState } from "react"
 import { useMutation } from "blitz"
 import {
   Box,
@@ -12,54 +12,109 @@ import {
   Button,
 } from "@chakra-ui/react"
 import updatePomodoro from "app/pomodoros/mutations/updatePomodoro"
-import { BreakTime, Pomodoro } from "db"
+import updateBreakTime from "app/break-times/mutations/updateBreakTime"
+import { BreakTime, Pomodoro, Task } from "db"
+
+const MINUTE = 1000 * 60
+
+const calcRange = ({
+  prevRange,
+  duration,
+}: {
+  prevRange: [number, number] | null
+  duration: [number, number]
+}): [number, number] => {
+  if (!prevRange) {
+    let range: [number, number] | null = null
+    const midpoint = (duration[0] + duration[1]) / 2
+    let nextRange: [number, number] = [midpoint - 15 * MINUTE, midpoint + 15 * MINUTE]
+    while (range !== nextRange) {
+      range = nextRange
+      nextRange = calcRange({ prevRange: range, duration })
+    }
+    return range
+  } else {
+    const prevRangeLength = prevRange[1] - prevRange[0]
+
+    const gaps = [duration[0] - prevRange[0], prevRange[1] - duration[1]]
+
+    if (gaps.some((g) => g < 0.1 * prevRangeLength)) {
+      if (prevRangeLength === 15 * MINUTE) {
+        return [prevRange[0] - 7.5 * MINUTE, prevRange[1] + 7.5 * MINUTE]
+      } else if (prevRangeLength === 30 * MINUTE) {
+        return [prevRange[0] - 45 * MINUTE, prevRange[1] + 45 * MINUTE]
+      } else if (prevRangeLength === 120 * MINUTE) {
+        return [prevRange[0] - 60 * MINUTE, prevRange[1] + 60 * MINUTE]
+      } else {
+        return prevRange
+      }
+    } else if (gaps.some((g) => g > 0.4 * prevRangeLength)) {
+      if (prevRangeLength === 240 * MINUTE) {
+        return [prevRange[0] + 60 * MINUTE, prevRange[1] - 60 * MINUTE]
+      } else if (prevRangeLength === 120 * MINUTE) {
+        return [prevRange[0] + 45 * MINUTE, prevRange[1] - 45 * MINUTE]
+      } else if (prevRangeLength === 30 * MINUTE) {
+        return [prevRange[0] + 7.5 * MINUTE, prevRange[1] - 7.5 * MINUTE]
+      } else {
+        return prevRange
+      }
+    } else {
+      return prevRange
+    }
+  }
+}
 
 type EditActivityDurationProps = {
-  onCancel: () => void
-  onSave: () => void
-  activity: Pomodoro | BreakTime
+  onCancel?: () => void
+  onSave?: () => void
+  activity: (Pomodoro & { tasks: Task[] }) | BreakTime
 }
 
 export const EditActivityDuration = (props: EditActivityDurationProps) => {
-  const [updatePomodoroMutation] = useMutation(updatePomodoro)
   const { onCancel, onSave, activity } = props
 
-  const rangeStartDate = new Date(activity.createdAt)
-  rangeStartDate.setMilliseconds(0)
-  rangeStartDate.setSeconds(0)
-  const rangeStart = rangeStartDate.getTime() - 1000 * 60 * 30 // 30 mins
+  const [updatePomodoroMutation] = useMutation(updatePomodoro)
+  const [updateBreakTimeMutation] = useMutation(updateBreakTime)
 
-  const rangeEndDate = new Date(activity.stoppedAt!)
-  rangeEndDate.setMilliseconds(0)
-  rangeEndDate.setSeconds(0)
-  const rangeEnd = rangeEndDate.getTime() + 1000 * 60 * 30
+  const defaultValue: [number, number] = [
+    activity.createdAt.getTime(),
+    activity.stoppedAt!.getTime(),
+  ]
 
-  const normalisedCreatedAt = new Date(activity.createdAt)
-  normalisedCreatedAt.setMilliseconds(0)
-  normalisedCreatedAt.setSeconds(0)
+  const [duration, setStartEnd] = useState(defaultValue)
 
-  const normalisedStoppedAt = new Date(activity.stoppedAt!)
-  normalisedStoppedAt.setMilliseconds(0)
-  normalisedStoppedAt.setSeconds(0)
+  const hasChanges = defaultValue[0] !== duration[0] || defaultValue[1] !== duration[1]
 
-  const [[start, end], setStartEnd] = useState([normalisedCreatedAt, normalisedStoppedAt])
+  const [range, setRange] = useState(calcRange({ prevRange: null, duration }))
 
-  const save = async () => {
-    await updatePomodoroMutation({ id: activity.id, createdAt: start, stoppedAt: end })
-    onSave()
+  const updateRange = (newDuration: [number, number]) => {
+    setRange(calcRange({ prevRange: range, duration: newDuration }))
   }
 
-  const defaultValue = [activity.createdAt.getTime(), activity.stoppedAt!.getTime()]
-
-  const hasChanges = defaultValue[0] !== start.getTime() || defaultValue[1] !== end.getTime()
+  const save = async () => {
+    const data = {
+      id: activity.id,
+      createdAt: new Date(duration[0]),
+      stoppedAt: new Date(duration[1]),
+    }
+    if ("tasks" in activity) {
+      await updatePomodoroMutation(data)
+    } else {
+      await updateBreakTimeMutation(data)
+    }
+    if (onSave) {
+      onSave()
+    }
+  }
 
   return (
     <VStack width={400}>
       <RangeSlider
         step={1000 * 60} // minute
-        onChange={(val: [number, number]) => setStartEnd([new Date(val[0]), new Date(val[1])])}
-        min={rangeStart}
-        max={rangeEnd}
+        onChange={(val: [number, number]) => setStartEnd(val)}
+        onChangeEnd={(val: [number, number]) => updateRange(val)}
+        min={range[0]}
+        max={range[1]}
         defaultValue={defaultValue}
         marginBottom={3}
       >
@@ -68,12 +123,12 @@ export const EditActivityDuration = (props: EditActivityDurationProps) => {
         </RangeSliderTrack>
         <RangeSliderThumb boxSize={10} index={0}>
           <Box>
-            <Text fontSize="xs">{start.toLocaleTimeString().substring(0, 5)}</Text>
+            <Text fontSize="xs">{new Date(duration[0]).toLocaleTimeString().substring(0, 5)}</Text>
           </Box>
         </RangeSliderThumb>
         <RangeSliderThumb boxSize={10} index={1}>
           <Box>
-            <Text fontSize="xs">{end.toLocaleTimeString().substring(0, 5)}</Text>
+            <Text fontSize="xs">{new Date(duration[1]).toLocaleTimeString().substring(0, 5)}</Text>
           </Box>
         </RangeSliderThumb>
       </RangeSlider>
@@ -81,9 +136,11 @@ export const EditActivityDuration = (props: EditActivityDurationProps) => {
         <Button size="sm" disabled={!hasChanges} onClick={save}>
           Save
         </Button>
-        <Button size="sm" onClick={onCancel}>
-          Cancel
-        </Button>
+        {onCancel ? (
+          <Button size="sm" onClick={onCancel}>
+            Cancel
+          </Button>
+        ) : null}
       </HStack>
     </VStack>
   )

@@ -1,9 +1,22 @@
 import { Suspense } from "react"
 import { usePaginatedQuery, useRouter, BlitzPage } from "blitz"
-import { Button, Container, Heading, HStack, Text, VStack } from "@chakra-ui/react"
+import {
+  Accordion,
+  AccordionItem,
+  AccordionButton,
+  AccordionPanel,
+  AccordionIcon,
+  Box,
+  Button,
+  Container,
+  Heading,
+  HStack,
+  VStack,
+} from "@chakra-ui/react"
 import Layout from "app/core/layouts/Layout"
 import { TopNav } from "app/core/components/TopNav"
 import getBreakTimes from "app/break-times/queries/getBreakTimes"
+import { EditActivityDuration } from "app/activities/components/EditActivityDuration"
 
 const ITEMS_PER_PAGE = 100
 
@@ -11,6 +24,7 @@ export const BreakTimesList = () => {
   const router = useRouter()
   const page = Number(router.query.page) || 0
   const [{ breakTimes, hasMore }] = usePaginatedQuery(getBreakTimes, {
+    where: { stoppedAt: { not: null } },
     orderBy: { id: "asc" },
     skip: ITEMS_PER_PAGE * page,
     take: ITEMS_PER_PAGE,
@@ -21,13 +35,24 @@ export const BreakTimesList = () => {
 
   return (
     <VStack>
-      {breakTimes.map((pomodoro) => (
-        <Text key={pomodoro.id}>
-          {pomodoro.createdAt.toLocaleString()}
-          {pomodoro.stoppedAt ? ` - ${pomodoro.stoppedAt.toLocaleTimeString()}` : null}
-        </Text>
-      ))}
-
+      <Accordion>
+        {breakTimes.map((bt) => (
+          <AccordionItem key={bt.id}>
+            <h2>
+              <AccordionButton>
+                <Box flex="1" textAlign="left">
+                  {bt.createdAt.toLocaleString()}
+                  {bt.stoppedAt ? ` - ${bt.stoppedAt.toLocaleTimeString()}` : null}
+                </Box>
+                <AccordionIcon />
+              </AccordionButton>
+            </h2>
+            <AccordionPanel pb={4}>
+              <EditActivityDuration activity={bt} onCancel={() => null} onSave={() => null} />
+            </AccordionPanel>
+          </AccordionItem>
+        ))}
+      </Accordion>
       <HStack>
         <Button disabled={page === 0} onClick={goToPreviousPage}>
           Previous

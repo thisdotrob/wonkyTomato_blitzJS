@@ -43,6 +43,11 @@ export const TasksPanel = (props: TasksPanelProps) => {
             >
               <MdRemoveCircle />
             </ChakraLink>
+            <ChakraLink>
+              <Link href={Routes.EditTaskPage({ taskId: t.id })}>
+                <Text>{t.description}</Text>
+              </Link>
+            </ChakraLink>
           </HStack>
         ))}
       </VStack>
