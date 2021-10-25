@@ -54,9 +54,6 @@ const EditableTaskDetail = (props: EditableTaskDetailProps) => {
 
   const [updateTaskDetailMutation] = useMutation(updateTaskDetail)
 
-  console.log("hello?")
-  console.log("body", taskDetail.body)
-
   return (
     <Editable
       borderWidth="1px"
@@ -64,8 +61,6 @@ const EditableTaskDetail = (props: EditableTaskDetailProps) => {
       px={2}
       w={600}
       onSubmit={async (body) => {
-        console.log("body")
-        console.log(body)
         await updateTaskDetailMutation({ body, id: taskDetail.id })
       }}
       defaultValue={taskDetail.body}
@@ -103,8 +98,6 @@ const CreateTaskDetail = (props: CreateTaskDetailProps) => {
         schema={validations.TaskDetail}
         initialValues={{ body: "" }}
         onSubmit={async (values) => {
-          console.log("values")
-          console.log(values)
           try {
             await createTaskDetailMutation({ taskId, ...values })
             await onSuccess()
