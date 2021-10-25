@@ -1,4 +1,4 @@
-import { useState, Suspense } from "react"
+import { Suspense } from "react"
 import ResizeTextarea from "react-textarea-autosize"
 import { useQuery, useMutation, useParam, BlitzPage } from "blitz"
 import {
@@ -25,9 +25,6 @@ import getTask from "app/tasks/queries/getTask"
 import updateTask from "app/tasks/mutations/updateTask"
 import createTaskDetail from "app/taskDetails/mutations/createTaskDetail"
 import updateTaskDetail from "app/taskDetails/mutations/updateTaskDetail"
-import * as validations from "app/auth/validations"
-import { Form, FORM_ERROR } from "app/core/components/Form"
-import { FormTextarea } from "app/core/components/Forms/FormTextarea"
 import { TaskDetail } from "db"
 
 function EditableControls() {
@@ -57,6 +54,8 @@ const EditableTaskDetail = (props: EditableTaskDetailProps) => {
 
   return (
     <Editable
+      startWithEditView={taskDetail.body === ""}
+      placeholder="Enter detail..."
       borderWidth="1px"
       borderRadius="lg"
       px={2}
@@ -76,49 +75,10 @@ const EditableTaskDetail = (props: EditableTaskDetailProps) => {
         </Box>
         <Box>
           <EditablePreview px={2} w={600} />
-          <EditableInput as={ResizeTextarea} px={2} w={600} />
+          <EditableInput as={ResizeTextarea} autoFocus={taskDetail.body === ""} px={2} w={600} />
         </Box>
       </VStack>
     </Editable>
-  )
-}
-
-type CreateTaskDetailProps = {
-  taskId: number
-  onSuccess: () => Promise<any>
-}
-
-const CreateTaskDetail = (props: CreateTaskDetailProps) => {
-  const { onSuccess, taskId } = props
-  const [createTaskDetailMutation] = useMutation(createTaskDetail)
-
-  return (
-    <VStack>
-      <Form
-        submitText="Add task detail"
-        schema={validations.TaskDetail}
-        initialValues={{ body: "" }}
-        onSubmit={async (values) => {
-          try {
-            await createTaskDetailMutation({ taskId, ...values })
-            await onSuccess()
-          } catch (error) {
-            return {
-              [FORM_ERROR]:
-                "Sorry, we had an unexpected error. Please try again. - " + error.toString(),
-            }
-          }
-        }}
-        submitButtonProps={{
-          size: "sm",
-        }}
-        stackProps={{
-          direction: "row",
-        }}
-      >
-        <FormTextarea name="body" placeholder="Detail" />
-      </Form>
-    </VStack>
   )
 }
 
@@ -126,11 +86,7 @@ export const EditTask = () => {
   const taskId = useParam("taskId", "number")
   const [task, { refetch }] = useQuery(getTask, { id: taskId })
   const [updateTaskMutation] = useMutation(updateTask)
-  const [creatingTaskDetail, setCreatingTaskDetail] = useState(false)
-  const onCreateTaskDetailSuccess = async () => {
-    setCreatingTaskDetail(false)
-    await refetch()
-  }
+  const [createTaskDetailMutation] = useMutation(createTaskDetail)
 
   return (
     <VStack>
@@ -150,11 +106,14 @@ export const EditTask = () => {
           <EditableTaskDetail key={d.id} taskDetail={d} />
         ))}
       </VStack>
-      {creatingTaskDetail ? (
-        <CreateTaskDetail onSuccess={onCreateTaskDetailSuccess} taskId={task.id} />
-      ) : (
-        <ChakraLink onClick={() => setCreatingTaskDetail(true)}>Add detail...</ChakraLink>
-      )}
+      <ChakraLink
+        onClick={async () => {
+          await createTaskDetailMutation({ body: "", taskId: task.id })
+          refetch()
+        }}
+      >
+        Add detail...
+      </ChakraLink>
     </VStack>
   )
 }
