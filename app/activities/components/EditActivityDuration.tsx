@@ -24,41 +24,31 @@ const calcRange = ({
   prevRange: [number, number]
   duration: [number, number]
 }): [number, number] => {
-  console.log("calcRange")
   const prevRangeLength = prevRange[1] - prevRange[0]
 
   const gaps = [duration[0] - prevRange[0], prevRange[1] - duration[1]]
 
   if (gaps.some((g) => g < 0.1 * prevRangeLength)) {
     if (prevRangeLength === 15 * MINUTE) {
-      console.log("growing to 30")
       return [prevRange[0] - 7.5 * MINUTE, prevRange[1] + 7.5 * MINUTE]
     } else if (prevRangeLength === 30 * MINUTE) {
-      console.log("growing to 120")
       return [prevRange[0] - 45 * MINUTE, prevRange[1] + 45 * MINUTE]
     } else if (prevRangeLength === 120 * MINUTE) {
-      console.log("growing to 240")
       return [prevRange[0] - 60 * MINUTE, prevRange[1] + 60 * MINUTE]
     } else {
-      console.log("at upper limit!")
       return prevRange
     }
   } else if (gaps.some((g) => g > 0.4 * prevRangeLength)) {
     if (prevRangeLength === 240 * MINUTE) {
-      console.log("shrinking to 120")
       return [prevRange[0] + 60 * MINUTE, prevRange[1] - 60 * MINUTE]
     } else if (prevRangeLength === 120 * MINUTE) {
-      console.log("shrinking to 30")
       return [prevRange[0] + 45 * MINUTE, prevRange[1] - 45 * MINUTE]
     } else if (prevRangeLength === 30 * MINUTE) {
-      console.log("shrinking to 15")
       return [prevRange[0] + 7.5 * MINUTE, prevRange[1] - 7.5 * MINUTE]
     } else {
-      console.log("at lower limit!")
       return prevRange
     }
   } else {
-    console.log(`no need to change! ${(prevRange[1] - prevRange[0]) / MINUTE}`)
     return prevRange
   }
 }
@@ -81,7 +71,6 @@ type EditActivityDurationProps = {
 }
 
 export const EditActivityDuration = (props: EditActivityDurationProps) => {
-  console.log("Render!")
   const { onCancel, onSave, activity } = props
 
   const [updatePomodoroMutation] = useMutation(updatePomodoro)
@@ -97,14 +86,12 @@ export const EditActivityDuration = (props: EditActivityDurationProps) => {
   const hasChanges = defaultValue[0] !== duration[0] || defaultValue[1] !== duration[1]
 
   const getInitialRange = () => {
-    console.log("getInitialRange")
     return calcInitialRange({ duration: defaultValue })
   }
 
   const [range, setRange] = useState(getInitialRange())
 
   const updateRange = (newDuration: [number, number]) => {
-    console.log("updateRange")
     setRange(calcRange({ prevRange: range, duration: newDuration }))
   }
 
@@ -130,7 +117,6 @@ export const EditActivityDuration = (props: EditActivityDurationProps) => {
         step={1000 * 60} // minute
         onChange={(val: [number, number]) => setDuration(val)}
         onChangeEnd={(val: [number, number]) => {
-          console.log("onChangeEnd")
           updateRange(val)
         }}
         min={range[0]}
