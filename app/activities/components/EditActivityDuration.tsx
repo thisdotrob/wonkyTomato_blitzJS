@@ -68,10 +68,11 @@ type EditActivityDurationProps = {
   onCancel?: () => void
   onSave?: () => void
   activity: (Pomodoro & { tasks: Task[] }) | BreakTime
+  spacing: number
 }
 
 export const EditActivityDuration = (props: EditActivityDurationProps) => {
-  const { onCancel, onSave, activity } = props
+  const { onCancel, onSave, activity, spacing } = props
 
   const [updatePomodoroMutation] = useMutation(updatePomodoro)
   const [updateBreakTimeMutation] = useMutation(updateBreakTime)
@@ -112,7 +113,7 @@ export const EditActivityDuration = (props: EditActivityDurationProps) => {
   }
 
   return (
-    <VStack width={400}>
+    <VStack width={400} spacing={spacing}>
       <RangeSlider
         step={1000 * 60} // minute
         onChange={(val: [number, number]) => setDuration(val)}
@@ -122,7 +123,6 @@ export const EditActivityDuration = (props: EditActivityDurationProps) => {
         min={range[0]}
         max={range[1]}
         defaultValue={defaultValue}
-        marginBottom={3}
       >
         <RangeSliderTrack>
           <RangeSliderFilledTrack />

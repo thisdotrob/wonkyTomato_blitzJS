@@ -25,6 +25,7 @@ export const EditPomodoro = () => {
               setIsEditingDuration(false)
               refetch()
             }}
+            spacing={4}
           />
         ) : (
           <VStack>

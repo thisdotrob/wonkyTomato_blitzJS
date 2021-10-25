@@ -54,8 +54,8 @@ export const BreakTimesList = () => {
               </Box>
               <AccordionIcon />
             </AccordionButton>
-            <AccordionPanel pb={4}>
-              <EditActivityDuration activity={bt} onCancel={() => null} onSave={() => null} />
+            <AccordionPanel pt={8} pb={4}>
+              <EditActivityDuration activity={bt} spacing={10} />
             </AccordionPanel>
           </AccordionItem>
         ))}
