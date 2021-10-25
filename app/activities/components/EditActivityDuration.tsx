@@ -10,6 +10,7 @@ import {
   VStack,
   HStack,
   Button,
+  useColorModeValue,
 } from "@chakra-ui/react"
 import updatePomodoro from "app/pomodoros/mutations/updatePomodoro"
 import updateBreakTime from "app/break-times/mutations/updateBreakTime"
@@ -62,6 +63,11 @@ const calcInitialRange = ({ duration }) => {
     nextRange = calcRange({ prevRange: range, duration })
   }
   return range
+}
+
+const RangeSliderThumbFixed = (props: Parameters<typeof RangeSliderThumb>[0]) => {
+  const bg = useColorModeValue("white", "gray.700")
+  return <RangeSliderThumb bg={bg} {...props} />
 }
 
 type EditActivityDurationProps = {
@@ -127,16 +133,14 @@ export const EditActivityDuration = (props: EditActivityDurationProps) => {
         <RangeSliderTrack>
           <RangeSliderFilledTrack />
         </RangeSliderTrack>
-        <RangeSliderThumb boxSize={10} index={0}>
-          <Box>
-            <Text fontSize="xs">{new Date(duration[0]).toLocaleTimeString().substring(0, 5)}</Text>
-          </Box>
-        </RangeSliderThumb>
-        <RangeSliderThumb boxSize={10} index={1}>
+        <RangeSliderThumbFixed boxSize={10} index={0}>
+          <Text fontSize="xs">{new Date(duration[0]).toLocaleTimeString().substring(0, 5)}</Text>
+        </RangeSliderThumbFixed>
+        <RangeSliderThumbFixed boxSize={10} index={1}>
           <Box>
             <Text fontSize="xs">{new Date(duration[1]).toLocaleTimeString().substring(0, 5)}</Text>
           </Box>
-        </RangeSliderThumb>
+        </RangeSliderThumbFixed>
       </RangeSlider>
       <HStack>
         <Button size="sm" disabled={!hasChanges} onClick={save}>
