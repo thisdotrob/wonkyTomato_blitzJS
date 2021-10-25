@@ -14,7 +14,7 @@ export default resolver.pipe(resolver.zod(GetTask), resolver.authorize(), async 
 
   const task = await db.task.findFirst({
     where: { id, organizationId: orgId },
-    include: { details: true },
+    include: { details: { orderBy: { createdAt: "asc" } } },
   })
 
   if (!task) throw new NotFoundError()
