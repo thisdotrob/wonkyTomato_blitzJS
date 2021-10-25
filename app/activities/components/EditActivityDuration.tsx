@@ -21,47 +21,57 @@ const calcRange = ({
   prevRange,
   duration,
 }: {
-  prevRange: [number, number] | null
+  prevRange: [number, number]
   duration: [number, number]
 }): [number, number] => {
-  if (!prevRange) {
-    let range: [number, number] | null = null
-    const midpoint = (duration[0] + duration[1]) / 2
-    let nextRange: [number, number] = [midpoint - 15 * MINUTE, midpoint + 15 * MINUTE]
-    while (range !== nextRange) {
-      range = nextRange
-      nextRange = calcRange({ prevRange: range, duration })
-    }
-    return range
-  } else {
-    const prevRangeLength = prevRange[1] - prevRange[0]
+  console.log("calcRange")
+  const prevRangeLength = prevRange[1] - prevRange[0]
 
-    const gaps = [duration[0] - prevRange[0], prevRange[1] - duration[1]]
+  const gaps = [duration[0] - prevRange[0], prevRange[1] - duration[1]]
 
-    if (gaps.some((g) => g < 0.1 * prevRangeLength)) {
-      if (prevRangeLength === 15 * MINUTE) {
-        return [prevRange[0] - 7.5 * MINUTE, prevRange[1] + 7.5 * MINUTE]
-      } else if (prevRangeLength === 30 * MINUTE) {
-        return [prevRange[0] - 45 * MINUTE, prevRange[1] + 45 * MINUTE]
-      } else if (prevRangeLength === 120 * MINUTE) {
-        return [prevRange[0] - 60 * MINUTE, prevRange[1] + 60 * MINUTE]
-      } else {
-        return prevRange
-      }
-    } else if (gaps.some((g) => g > 0.4 * prevRangeLength)) {
-      if (prevRangeLength === 240 * MINUTE) {
-        return [prevRange[0] + 60 * MINUTE, prevRange[1] - 60 * MINUTE]
-      } else if (prevRangeLength === 120 * MINUTE) {
-        return [prevRange[0] + 45 * MINUTE, prevRange[1] - 45 * MINUTE]
-      } else if (prevRangeLength === 30 * MINUTE) {
-        return [prevRange[0] + 7.5 * MINUTE, prevRange[1] - 7.5 * MINUTE]
-      } else {
-        return prevRange
-      }
+  if (gaps.some((g) => g < 0.1 * prevRangeLength)) {
+    if (prevRangeLength === 15 * MINUTE) {
+      console.log("growing to 30")
+      return [prevRange[0] - 7.5 * MINUTE, prevRange[1] + 7.5 * MINUTE]
+    } else if (prevRangeLength === 30 * MINUTE) {
+      console.log("growing to 120")
+      return [prevRange[0] - 45 * MINUTE, prevRange[1] + 45 * MINUTE]
+    } else if (prevRangeLength === 120 * MINUTE) {
+      console.log("growing to 240")
+      return [prevRange[0] - 60 * MINUTE, prevRange[1] + 60 * MINUTE]
     } else {
+      console.log("at upper limit!")
       return prevRange
     }
+  } else if (gaps.some((g) => g > 0.4 * prevRangeLength)) {
+    if (prevRangeLength === 240 * MINUTE) {
+      console.log("shrinking to 120")
+      return [prevRange[0] + 60 * MINUTE, prevRange[1] - 60 * MINUTE]
+    } else if (prevRangeLength === 120 * MINUTE) {
+      console.log("shrinking to 30")
+      return [prevRange[0] + 45 * MINUTE, prevRange[1] - 45 * MINUTE]
+    } else if (prevRangeLength === 30 * MINUTE) {
+      console.log("shrinking to 15")
+      return [prevRange[0] + 7.5 * MINUTE, prevRange[1] - 7.5 * MINUTE]
+    } else {
+      console.log("at lower limit!")
+      return prevRange
+    }
+  } else {
+    console.log(`no need to change! ${(prevRange[1] - prevRange[0]) / MINUTE}`)
+    return prevRange
   }
+}
+
+const calcInitialRange = ({ duration }) => {
+  let range: [number, number] | null = null
+  const midpoint = (duration[0] + duration[1]) / 2
+  let nextRange: [number, number] = [midpoint - 15 * MINUTE, midpoint + 15 * MINUTE]
+  while (range !== nextRange) {
+    range = nextRange
+    nextRange = calcRange({ prevRange: range, duration })
+  }
+  return range
 }
 
 type EditActivityDurationProps = {
@@ -71,6 +81,7 @@ type EditActivityDurationProps = {
 }
 
 export const EditActivityDuration = (props: EditActivityDurationProps) => {
+  console.log("Render!")
   const { onCancel, onSave, activity } = props
 
   const [updatePomodoroMutation] = useMutation(updatePomodoro)
@@ -81,13 +92,19 @@ export const EditActivityDuration = (props: EditActivityDurationProps) => {
     activity.stoppedAt!.getTime(),
   ]
 
-  const [duration, setStartEnd] = useState(defaultValue)
+  const [duration, setDuration] = useState(defaultValue)
 
   const hasChanges = defaultValue[0] !== duration[0] || defaultValue[1] !== duration[1]
 
-  const [range, setRange] = useState(calcRange({ prevRange: null, duration }))
+  const getInitialRange = () => {
+    console.log("getInitialRange")
+    return calcInitialRange({ duration: defaultValue })
+  }
+
+  const [range, setRange] = useState(getInitialRange())
 
   const updateRange = (newDuration: [number, number]) => {
+    console.log("updateRange")
     setRange(calcRange({ prevRange: range, duration: newDuration }))
   }
 
@@ -111,8 +128,11 @@ export const EditActivityDuration = (props: EditActivityDurationProps) => {
     <VStack width={400}>
       <RangeSlider
         step={1000 * 60} // minute
-        onChange={(val: [number, number]) => setStartEnd(val)}
-        onChangeEnd={(val: [number, number]) => updateRange(val)}
+        onChange={(val: [number, number]) => setDuration(val)}
+        onChangeEnd={(val: [number, number]) => {
+          console.log("onChangeEnd")
+          updateRange(val)
+        }}
         min={range[0]}
         max={range[1]}
         defaultValue={defaultValue}
