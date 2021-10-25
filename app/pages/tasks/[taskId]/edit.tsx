@@ -2,15 +2,22 @@ import { useState, Suspense } from "react"
 import { useQuery, useMutation, useParam, BlitzPage } from "blitz"
 import {
   Box,
+  ButtonGroup,
   Container,
   Editable,
   EditableInput,
   EditablePreview,
   Flex,
   Heading,
+  HStack,
+  IconButton,
   Link as ChakraLink,
+  Text,
   VStack,
+  useEditableControls,
+  Spacer,
 } from "@chakra-ui/react"
+import { CheckIcon, CloseIcon, EditIcon } from "@chakra-ui/icons"
 import Layout from "app/core/layouts/Layout"
 import { TopNav } from "app/core/components/TopNav"
 import getTask from "app/tasks/queries/getTask"
@@ -22,6 +29,22 @@ import { Form, FORM_ERROR } from "app/core/components/Form"
 import { FormTextarea } from "app/core/components/Forms/FormTextarea"
 import { TaskDetail } from "db"
 
+function EditableControls() {
+  const { isEditing, getSubmitButtonProps, getCancelButtonProps, getEditButtonProps } =
+    useEditableControls()
+
+  return isEditing ? (
+    <ButtonGroup justifyContent="center" size="sm">
+      <IconButton icon={<CheckIcon />} {...getSubmitButtonProps()} aria-label="submit" />
+      <IconButton icon={<CloseIcon />} {...getCancelButtonProps()} aria-label="cancel" />
+    </ButtonGroup>
+  ) : (
+    <Flex justifyContent="center">
+      <IconButton size="sm" icon={<EditIcon />} {...getEditButtonProps()} aria-label="edit" />
+    </Flex>
+  )
+}
+
 type EditableTaskDetailProps = {
   taskDetail: TaskDetail
 }
@@ -31,15 +54,35 @@ const EditableTaskDetail = (props: EditableTaskDetailProps) => {
 
   const [updateTaskDetailMutation] = useMutation(updateTaskDetail)
 
+  console.log("hello?")
+  console.log("body", taskDetail.body)
+
   return (
     <Editable
+      borderWidth="1px"
+      borderRadius="lg"
+      px={2}
+      w={600}
       onSubmit={async (body) => {
+        console.log("body")
+        console.log(body)
         await updateTaskDetailMutation({ body, id: taskDetail.id })
       }}
       defaultValue={taskDetail.body}
     >
-      <EditablePreview />
-      <EditableInput />
+      <VStack>
+        <Box pl={2} w={600}>
+          <HStack>
+            <Text fontStyle="italic">{taskDetail.createdAt.toLocaleString().substring(0, 17)}</Text>
+            <Spacer />
+            <EditableControls />
+          </HStack>
+        </Box>
+        <Box>
+          <EditablePreview px={2} w={600} whiteSpace="pre-wrap" />
+          <EditableInput px={2} w={600} h={300} whiteSpace="pre-wrap" />
+        </Box>
+      </VStack>
     </Editable>
   )
 }
@@ -60,6 +103,8 @@ const CreateTaskDetail = (props: CreateTaskDetailProps) => {
         schema={validations.TaskDetail}
         initialValues={{ body: "" }}
         onSubmit={async (values) => {
+          console.log("values")
+          console.log(values)
           try {
             await createTaskDetailMutation({ taskId, ...values })
             await onSuccess()
