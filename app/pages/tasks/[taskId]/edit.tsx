@@ -1,4 +1,5 @@
 import { useState, Suspense } from "react"
+import ResizeTextarea from "react-textarea-autosize"
 import { useQuery, useMutation, useParam, BlitzPage } from "blitz"
 import {
   Box,
@@ -74,8 +75,8 @@ const EditableTaskDetail = (props: EditableTaskDetailProps) => {
           </HStack>
         </Box>
         <Box>
-          <EditablePreview px={2} w={600} whiteSpace="pre-wrap" />
-          <EditableInput px={2} w={600} h={300} whiteSpace="pre-wrap" />
+          <EditablePreview px={2} w={600} />
+          <EditableInput as={ResizeTextarea} px={2} w={600} />
         </Box>
       </VStack>
     </Editable>
