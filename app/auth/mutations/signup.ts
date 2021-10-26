@@ -17,7 +17,7 @@ export default resolver.pipe(
             role: "OWNER",
             organization: {
               create: {
-                name: organization,
+                name: organization ?? email.toLowerCase().trim(),
               },
             },
           },

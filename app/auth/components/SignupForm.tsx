@@ -1,5 +1,7 @@
+import { useState } from "react"
 import { useColorModeValue } from "@chakra-ui/color-mode"
 import { Box, Text } from "@chakra-ui/layout"
+import { HStack, Link as ChakraLink } from "@chakra-ui/react"
 import signup from "app/auth/mutations/signup"
 import { Signup } from "app/auth/validations"
 import { Card } from "app/core/components/Card"
@@ -15,6 +17,8 @@ type SignupFormProps = {
 
 export const SignupForm = (props: SignupFormProps) => {
   const [signupMutation] = useMutation(signup)
+
+  const [isOrg, setIsOrg] = useState(false)
 
   return (
     <Card>
@@ -39,8 +43,15 @@ export const SignupForm = (props: SignupFormProps) => {
         }}
       >
         <FormTextInput type="email" name="email" label="Email" placeholder="Email" />
-        <FormTextInput name="organization" label="Organization" placeholder="Organization" />
         <FormTextInput type="password" name="password" label="Password" placeholder="Password" />
+        {isOrg ? (
+          <FormTextInput name="organization" label="Organization" placeholder="Organization" />
+        ) : (
+          <HStack>
+            <Text>Part of an organization? </Text>
+            <ChakraLink onClick={() => setIsOrg(true)}>Click here...</ChakraLink>
+          </HStack>
+        )}
       </Form>
 
       <Box
