@@ -31,6 +31,7 @@ export const TasksPanel = (props: TasksPanelProps) => {
 
   return (
     <VStack>
+      <Heading size="md">Attached Tasks</Heading>
       <VStack alignItems="flex-start">
         {currentTasks.map((t) => (
           <HStack key={t.id}>
@@ -55,10 +56,11 @@ export const TasksPanel = (props: TasksPanelProps) => {
         <VStack>
           <HStack>
             <Input
-              placeholder="Task description"
+              placeholder="Search for or add a new task"
               onChange={(event) => debounceSetSearchTerm(event.target.value)}
             />
             <Button
+              px={8}
               onClick={async () => {
                 if (searchTerm) {
                   await createTaskMutation({
@@ -71,7 +73,10 @@ export const TasksPanel = (props: TasksPanelProps) => {
                 }
               }}
             >
-              <MdAddCircle />
+              <HStack>
+                <MdAddCircle />
+                <Text>New task</Text>
+              </HStack>
             </Button>
           </HStack>
           {searchTerm ? (
@@ -92,7 +97,7 @@ export const TasksPanel = (props: TasksPanelProps) => {
                 </HStack>
               ))
             ) : (
-              <Text>No matching tasks</Text>
+              <Text>No matching tasks...</Text>
             )
           ) : null}
           <ChakraLink
@@ -106,7 +111,7 @@ export const TasksPanel = (props: TasksPanelProps) => {
         </VStack>
       ) : (
         <ChakraLink onClick={() => setAddingTask(true)}>
-          <Text>Add task</Text>
+          <Text>Add task...</Text>
         </ChakraLink>
       )}
     </VStack>

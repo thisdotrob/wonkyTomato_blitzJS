@@ -11,6 +11,7 @@ import {
   HStack,
   Text,
   Checkbox,
+  useColorModeValue,
 } from "@chakra-ui/react"
 import Layout from "app/core/layouts/Layout"
 import { TopNav } from "app/core/components/TopNav"
@@ -202,16 +203,17 @@ const BottomNav = () => {
 }
 
 const Home: BlitzPage = () => {
+  const bg = useColorModeValue("gray.50", "gray.700")
   return (
     <Container maxW="container.lg">
       <Suspense fallback="Loading...">
         <VStack spacing={0}>
           <TopNav />
           <Flex py={4} w="full">
-            <Box w="full" p={10}>
+            <Box borderRightWidth="1px" borderLeftColor="black" py={4} bg={bg} w="full" px={5}>
               <CurrentActivityPanel />
             </Box>
-            <Box w="full" p={10}>
+            <Box py={4} bg={bg} w="full" px={5}>
               <RightPanel />
             </Box>
           </Flex>
