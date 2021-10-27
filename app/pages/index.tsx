@@ -14,6 +14,7 @@ import {
   useColorModeValue,
 } from "@chakra-ui/react"
 import Layout from "app/core/layouts/Layout"
+import { NotificationsAlert } from "app/core/components/NotificationsAlert"
 import { TopNav } from "app/core/components/TopNav"
 import { useCurrentActivity } from "app/core/hooks/useCurrentActivity"
 import { useNow } from "app/core/hooks/useNow"
@@ -206,6 +207,7 @@ const Home: BlitzPage = () => {
   const bg = useColorModeValue("gray.50", "gray.700")
   return (
     <Container maxW="container.lg">
+      <NotificationsAlert />
       <Suspense fallback="Loading...">
         <VStack spacing={0}>
           <TopNav />
