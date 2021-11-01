@@ -85,6 +85,28 @@ const CurrentActivityPanel = () => {
     }
   }, [currentActivity, refetch, stopBreakTimeMutation, stopAutomatically])
 
+  useEffect(() => {
+    if (currentActivity !== null && !stopAutomatically) {
+      const now = new Date().getTime()
+      const suggestedEndTime = currentActivity.suggestedEndTime.getTime()
+      const timeLeft = suggestedEndTime - now
+
+      let timeout: undefined | NodeJS.Timeout
+
+      if (timeLeft > 0) {
+        timeout = setTimeout(async () => {
+          new Notification("Wonky Tomato", { body: "Activity finished!" })
+        }, timeLeft)
+      }
+
+      return () => {
+        if (timeout) {
+          clearTimeout(timeout)
+        }
+      }
+    }
+  }, [currentActivity, stopAutomatically])
+
   return currentActivity ? (
     <VStack>
       <Heading size="md">{currentActivity.type === "break" ? "Break" : "Pomodoro"}</Heading>
