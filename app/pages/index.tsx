@@ -74,13 +74,13 @@ const CurrentActivityPanel = () => {
     if (currentActivity !== null && stopAutomatically) {
       const now = new Date()
 
-      const interval = setInterval(async () => {
+      const timeout = setTimeout(async () => {
         await stopBreakTimeMutation({ id: currentActivity.activity.id })
         await refetch()
       }, currentActivity.suggestedEndTime.getTime() - now.getTime())
 
       return () => {
-        clearInterval(interval)
+        clearTimeout(timeout)
       }
     }
   }, [currentActivity, refetch, stopBreakTimeMutation, stopAutomatically])
