@@ -55,8 +55,50 @@ const TimeLeft = (props: TimeLeftProps) => {
 
   return (
     <Text>
-      {msLeft < 0 ? "- " : null}
+      Time left: {msLeft < 0 ? "-" : null}
       {hoursLeft}:{minutesLeft}:{secondsLeft}
+    </Text>
+  )
+}
+
+type StartTimeProps = {
+  activity: Pomodoro | BreakTime
+}
+
+const StartTime = (props: StartTimeProps) => {
+  const { activity } = props
+  return <Text>Started at: {activity.createdAt.toTimeString().substring(0, 5)}</Text>
+}
+
+type SuggestedEndTimeProps = {
+  suggestedEndTime: Date
+}
+
+const SuggestedEndTime = (props: SuggestedEndTimeProps) => {
+  const { suggestedEndTime } = props
+  return <Text>Suggested end time: {suggestedEndTime.toTimeString().substring(0, 5)}</Text>
+}
+
+type SuggestedDurationProps = {
+  activity: Pomodoro | BreakTime
+  suggestedEndTime: Date
+}
+
+const SuggestedDuration = (props: SuggestedDurationProps) => {
+  const { activity, suggestedEndTime } = props
+
+  const suggestedDurationMs = suggestedEndTime.getTime() - activity.createdAt.getTime()
+
+  const suggestedDuration = new Date(Math.abs(suggestedDurationMs))
+
+  const padded = (num: number) => (num < 10 ? `0${num}` : num)
+
+  const hours = padded(suggestedDuration.getUTCHours())
+  const minutes = padded(suggestedDuration.getUTCMinutes())
+
+  return (
+    <Text>
+      Suggested duration: {hours}:{minutes}{" "}
     </Text>
   )
 }
@@ -110,8 +152,14 @@ const CurrentActivityPanel = () => {
   return currentActivity ? (
     <VStack>
       <Heading size="md">{currentActivity.type === "break" ? "Break" : "Pomodoro"}</Heading>
-      {currentActivity ? <TimeLeft suggestedEndTime={currentActivity.suggestedEndTime} /> : null}
-      {currentActivity?.type === "break" &&
+      <TimeLeft suggestedEndTime={currentActivity.suggestedEndTime} />
+      <StartTime activity={currentActivity.activity} />
+      <SuggestedEndTime suggestedEndTime={currentActivity.suggestedEndTime} />
+      <SuggestedDuration
+        activity={currentActivity.activity}
+        suggestedEndTime={currentActivity.suggestedEndTime}
+      />
+      {currentActivity.type === "break" &&
       now.getTime() < currentActivity.suggestedEndTime.getTime() ? (
         <Checkbox onChange={(e) => setStopAutomatically(e.target.checked)}>
           Stop automatically
